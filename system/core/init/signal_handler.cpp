@@ -39,6 +39,8 @@ static void handle_signal() {
     char buf[32];
     read(signal_read_fd, buf, sizeof(buf));
 
+	// 找到 Zygote 进程井移除所有的 Zygote 进程的信息，
+	// 再重启 Zygote 服务的启动脚本中带有 0nrestart 选项的服务，
     ServiceManager::GetInstance().ReapAnyOutstandingChildren();
 }
 
@@ -48,6 +50,9 @@ static void SIGCHLD_handler(int) {
     }
 }
 
+// 主要用于防止 init 进程的子进程成为僵尸进程， 
+// 为了防止僵尸进程的出现，系统会在子进程暂停和
+// 终止的时候发出 SIGCHLD 信号
 void signal_handler_init() {
     // Create a signalling mechanism for SIGCHLD.
     int s[2];

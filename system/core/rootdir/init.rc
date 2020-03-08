@@ -620,6 +620,8 @@ on boot
     class_start core
 
 on nonencrypted
+	# 启动classname为main的Service，如 zygote main
+	# 对应的函数为 do_class_start
     class_start main
     class_start late_start
 

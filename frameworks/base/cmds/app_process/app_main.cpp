@@ -341,6 +341,7 @@ int main(int argc, char* const argv[])
     }
 
     if (zygote) {
+		// 启动 zygote
         runtime.start("com.android.internal.os.ZygoteInit", args, zygote);
     } else if (className) {
         runtime.start("com.android.internal.os.RuntimeInit", args, zygote);

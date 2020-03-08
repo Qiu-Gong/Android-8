@@ -131,6 +131,7 @@ static int do_class_start(const std::vector<std::string>& args) {
          * which are explicitly disabled.  They must
          * be started individually.
          */
+    // 函数会遍历 Service 链表，找到 classname 为 main 的 Zygote      
     ServiceManager::GetInstance().
         ForEachServiceInClass(args[1], [] (Service* s) { s->StartIfNotDisabled(); });
     return 0;

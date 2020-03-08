@@ -597,6 +597,7 @@ bool Service::ExecStart(std::unique_ptr<Timer>* exec_waiter) {
     return true;
 }
 
+// Zygote 服务启动
 bool Service::Start() {
     // Starting a service removes it from the disabled or reset state and
     // immediately takes it out of the restarting state if it was in there.
@@ -605,6 +606,7 @@ bool Service::Start() {
     // Running processes require no additional work --- if they're in the
     // process of exiting, we've ensured that they will immediately restart
     // on exit, unless they are ONESHOT.
+    // 如果 Service 已经运行，则不启动
     if (flags_ & SVC_RUNNING) {
         return false;
     }
@@ -626,6 +628,8 @@ bool Service::Start() {
         close(console_fd);
     }
 
+	// 判断需要启动的 Service 的对应的执行文件是否存在，
+	// 不存在则不启动该 Service
     struct stat sb;
     if (stat(args_[0].c_str(), &sb) == -1) {
         PLOG(ERROR) << "cannot find '" << args_[0] << "', disabling '" << name_ << "'";
@@ -650,9 +654,11 @@ bool Service::Start() {
     if (namespace_flags_) {
         pid = clone(nullptr, nullptr, namespace_flags_ | SIGCHLD, nullptr);
     } else {
+        // 1. 如果子进程没有启动，则调用 fork 函数创建子进程
         pid = fork();
     }
 
+	// 2.当前代码逻辑在子进程中运行
     if (pid == 0) {
         umask(077);
 
@@ -718,6 +724,7 @@ bool Service::Start() {
 
         std::vector<char*> strs;
         ExpandArgs(args_, &strs);
+		// 调用 execve 函数，Service 子进程就会被启动
         if (execve(strs[0], (char**) &strs[0], (char**) ENV) < 0) {
             PLOG(ERROR) << "cannot execve('" << strs[0] << "')";
         }
@@ -880,6 +887,7 @@ void ServiceManager::AddService(std::unique_ptr<Service> service) {
         LOG(ERROR) << "ignored duplicate definition of service '" << service->name() << "'";
         return;
     }
+	// 将解析出后的 service 添加到 services_ 列表中
     services_.emplace_back(std::move(service));
 }
 
@@ -1097,13 +1105,16 @@ void ServiceManager::ReapAnyOutstandingChildren() {
     }
 }
 
+// 用来搭建 Service 的架子
 bool ServiceParser::ParseSection(const std::vector<std::string>& args,
                                  std::string* err) {
-    if (args.size() < 3) {
+	// 判断 Service 是否有 name 与可执行程序
+	if (args.size() < 3) {
         *err = "services must have a name and a program";
         return false;
     }
 
+	// 检查 Service 的 name 是否有效
     const std::string& name = args[1];
     if (!IsValidName(name)) {
         *err = StringPrintf("invalid service name '%s'", name.c_str());
@@ -1111,18 +1122,22 @@ bool ServiceParser::ParseSection(const std::vector<std::string>& args,
     }
 
     std::vector<std::string> str_args(args.begin() + 2, args.end());
-    service_ = std::make_unique<Service>(name, str_args);
+	// 1. 构造出一个 Service 对象
+	service_ = std::make_unique<Service>(name, str_args);
     return true;
 }
 
+// 用于解析子项
 bool ServiceParser::ParseLineSection(const std::vector<std::string>& args,
                                      const std::string& filename, int line,
                                      std::string* err) const {
     return service_ ? service_->ParseLine(args, err) : false;
 }
 
+// 在解析完所有数据后，会调用 EndSection 函数
 void ServiceParser::EndSection() {
     if (service_) {
+		// 最后将 Service 对象加入 vector 类型的 Service 链表中。
         ServiceManager::GetInstance().AddService(std::move(service_));
     }
 }

@@ -1,3 +1,9 @@
+# zygote: Service用于通知init进程创建名为可zygote的进程
+# /system/bin/app_process64: 进程执行程序的路径
+# -Xzygote /system/bin --zygote --start-system-server: 参数
+
+# class main: 指的是Zygote的classname为main
+
 service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server
     class main
     priority -20

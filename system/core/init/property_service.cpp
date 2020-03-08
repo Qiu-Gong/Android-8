@@ -66,6 +66,7 @@ static int persistent_properties_loaded = 0;
 static int property_set_fd = -1;
 
 void property_init() {
+	// 初始化属性内存区域
     if (__system_property_area_init()) {
         LOG(ERROR) << "Failed to initialize property area";
         exit(1);
@@ -166,6 +167,7 @@ bool is_legal_property_name(const std::string& name) {
 uint32_t property_set(const std::string& name, const std::string& value) {
     size_t valuelen = value.size();
 
+	// 判断属性是否合法
     if (!is_legal_property_name(name)) {
         LOG(ERROR) << "property_set(\"" << name << "\", \"" << value << "\") failed: bad name";
         return PROP_ERROR_INVALID_NAME;
@@ -183,8 +185,11 @@ uint32_t property_set(const std::string& name, const std::string& value) {
         }
     }
 
+	// 1. 从属性存储空间查找该属性
     prop_info* pi = (prop_info*) __system_property_find(name.c_str());
-    if (pi != nullptr) {
+	// 如果属性存在
+	if (pi != nullptr) {
+		// 如果属性名称以 “ro.” 开头，则表示只读，不能修改，直接返回
         // ro.* properties are actually "write-once".
         if (android::base::StartsWith(name, "ro.")) {
             LOG(ERROR) << "property_set(\"" << name << "\", \"" << value << "\") failed: "
@@ -192,8 +197,10 @@ uint32_t property_set(const std::string& name, const std::string& value) {
             return PROP_ERROR_READ_ONLY_PROPERTY;
         }
 
+		// 如果属性存在， 就更新属性值
         __system_property_update(pi, value.c_str(), valuelen);
     } else {
+		// 如果属性不存在，则添加该属性
         int rc = __system_property_add(name.c_str(), name.size(), value.c_str(), valuelen);
         if (rc < 0) {
             LOG(ERROR) << "property_set(\"" << name << "\", \"" << value << "\") failed: "
@@ -204,7 +211,8 @@ uint32_t property_set(const std::string& name, const std::string& value) {
 
     // Don't write properties to disk until after we have read all default
     // properties to prevent them from being overwritten by default values.
-    if (persistent_properties_loaded && android::base::StartsWith(name, "persist.")) {
+	// 属性名称以“persist. ”开头的处理部分
+	if (persistent_properties_loaded && android::base::StartsWith(name, "persist.")) {
         write_persistent_property(name.c_str(), value.c_str());
     }
     property_changed(name, value);
@@ -346,9 +354,12 @@ static void handle_property_set(SocketConnection& socket,
   char* source_ctx = nullptr;
   getpeercon(socket.socket(), &source_ctx);
 
+	// 1. 如果属性名称以“ctl. ”开头，说明是控制属性
   if (android::base::StartsWith(name, "ctl.")) {
+  	// 检查客户端权限
     if (check_control_mac_perms(value.c_str(), source_ctx, &cr)) {
-      handle_control_message(name.c_str() + 4, value.c_str());
+	  // 2. 设置控制属性
+	  handle_control_message(name.c_str() + 4, value.c_str());
       if (!legacy_protocol) {
         socket.SendUint32(PROP_SUCCESS);
       }
@@ -363,7 +374,10 @@ static void handle_property_set(SocketConnection& socket,
       }
     }
   } else {
+    // 该分支是普通属性
+    // 检查客户端权限
     if (check_mac_perms(name, source_ctx, &cr)) {
+	  // 3. 设置普通属性
       uint32_t result = property_set(name, value);
       if (!legacy_protocol) {
         socket.SendUint32(result);
@@ -410,6 +424,7 @@ static void handle_property_set_fd() {
         char prop_name[PROP_NAME_MAX];
         char prop_value[PROP_VALUE_MAX];
 
+		// 如果 Socket 读取不到属性数据则返回
         if (!socket.RecvChars(prop_name, PROP_NAME_MAX, &timeout_ms) ||
             !socket.RecvChars(prop_value, PROP_VALUE_MAX, &timeout_ms)) {
           PLOG(ERROR) << "sys_prop(PROP_MSG_SETPROP): error while reading name/value from the socket";
@@ -419,6 +434,7 @@ static void handle_property_set_fd() {
         prop_name[PROP_NAME_MAX-1] = 0;
         prop_value[PROP_VALUE_MAX-1] = 0;
 
+		// 1. 处理 property_set
         handle_property_set(socket, prop_value, prop_value, true);
         break;
       }
@@ -666,6 +682,7 @@ void load_system_props() {
 void start_property_service() {
     property_set("ro.property_service.version", "2");
 
+	// 1. 创建非阻塞的 Socket
     property_set_fd = create_socket(PROP_SERVICE_NAME, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
                                     0666, 0, 0, NULL);
     if (property_set_fd == -1) {
@@ -673,7 +690,9 @@ void start_property_service() {
         exit(1);
     }
 
+	// 2. 对 property_set＿臼进行监听
+	// 同时为 8 个试图设置属性的用户提供服务
     listen(property_set_fd, 8);
-
+	// 3. 监听 property_set_fd，调用 handle_property_set_fd 函数进行处理。
     register_epoll_handler(property_set_fd, handle_property_set_fd);
 }

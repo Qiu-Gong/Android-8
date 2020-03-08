@@ -966,11 +966,14 @@ int main(int argc, char** argv) {
         boot_clock::time_point start_time = boot_clock::now();
 
         // Clear the umask.
+        // 清理 umask
         umask(0);
 
         // Get the basic filesystem setup we need put together in the initramdisk
         // on / and then we'll let the rc file figure out the rest.
-        mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755");
+        // 创建和挂载启动所需的文件目录  
+        // tmpfs,devpts,proc,sysfs,selinuxfs
+		mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755");
         mkdir("/dev/pts", 0755);
         mkdir("/dev/socket", 0755);
         mount("devpts", "/dev/pts", "devpts", 0, NULL);
@@ -988,7 +991,8 @@ int main(int argc, char** argv) {
 
         // Now that tmpfs is mounted on /dev and we have /dev/kmsg, we can actually
         // talk to the outside world...
-        InitKernelLogging(argv);
+		// 初始化 Kernel 的 Log ，这样就可以从外界获取 Kernel 的日志
+		InitKernelLogging(argv);
 
         LOG(INFO) << "init first stage started!";
 
@@ -1037,6 +1041,7 @@ int main(int argc, char** argv) {
     // Indicate that booting is in progress to background fw loaders, etc.
     close(open("/dev/.booting", O_WRONLY | O_CREAT | O_CLOEXEC, 0000));
 
+	// 1. 对属性服务进行初始化
     property_init();
 
     // If arguments are passed both on the command line and in DT,
@@ -1066,28 +1071,33 @@ int main(int argc, char** argv) {
     selinux_initialize(false);
     selinux_restore_context();
 
+	// 创建 epoll 句柄
     epoll_fd = epoll_create1(EPOLL_CLOEXEC);
     if (epoll_fd == -1) {
         PLOG(ERROR) << "epoll_create1 failed";
         exit(1);
     }
 
+	// 2. 用于设置子进程信号处理函数，如果子进程(Zygote进程)异常退出，
+	// init 进程会调用该函数中设定的信号处理函数来进行处理
     signal_handler_init();
 
+	// 导入默认的环境变量
     property_load_boot_defaults();
     export_oem_lock_status();
+	// 3. 启动属性服务
     start_property_service();
     set_usb_controller();
 
     const BuiltinFunctionMap function_map;
     Action::set_function_map(&function_map);
-
     Parser& parser = Parser::GetInstance();
     parser.AddSectionParser("service",std::make_unique<ServiceParser>());
     parser.AddSectionParser("on", std::make_unique<ActionParser>());
     parser.AddSectionParser("import", std::make_unique<ImportParser>());
     std::string bootscript = GetProperty("ro.boot.init_rc", "");
     if (bootscript.empty()) {
+		// 4. 解析 init.rc 配置文件
         parser.ParseConfig("/init.rc");
         parser.set_is_system_etc_init_loaded(
                 parser.ParseConfig("/system/etc/init"));
@@ -1141,10 +1151,12 @@ int main(int argc, char** argv) {
         int epoll_timeout_ms = -1;
 
         if (!(waiting_for_prop || ServiceManager::GetInstance().IsWaitingForExec())) {
-            am.ExecuteOneCommand();
+			// 内部遍历执行每个 action 中携带的 command 对应的执行函数
+			am.ExecuteOneCommand();
         }
         if (!(waiting_for_prop || ServiceManager::GetInstance().IsWaitingForExec())) {
-            restart_processes();
+			// 5. 重启死去的进程
+			restart_processes();
 
             // If there's a process that needs restarting, wake up in time for that.
             if (process_needs_restart_at != 0) {
