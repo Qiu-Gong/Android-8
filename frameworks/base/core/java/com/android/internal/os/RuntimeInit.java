@@ -233,6 +233,7 @@ public class RuntimeInit {
         Class<?> cl;
 
         try {
+			// 1. 通过反射得到 SystemServer 类 com.android.server.SystemServer
             cl = Class.forName(className, true, classLoader);
         } catch (ClassNotFoundException ex) {
             throw new RuntimeException(
@@ -242,6 +243,7 @@ public class RuntimeInit {
 
         Method m;
         try {
+			// 2. 找到 SystemServer 的 main 方法
             m = cl.getMethod("main", new Class[] { String[].class });
         } catch (NoSuchMethodException ex) {
             throw new RuntimeException(
@@ -263,6 +265,10 @@ public class RuntimeInit {
          * clears up all the stack frames that were required in setting
          * up the process.
          */
+        // 3. 捕获 MethodAndArgsCaller 异常的代码在 ZygoteInit.java 的 main 方法中。
+        // 这个 main 方法会调用 MethodAndArgsCaller.run(); run 反射执行 SystemServer 的 main 方法
+        // 这种抛出异常的处理会清除所有的设置过程需要的堆栈帧，
+        // 并让 SystemServer 的 main 方法看起来像是 SystemServer 进程的入口方法
         throw new Zygote.MethodAndArgsCaller(m, argv);
     }
 
@@ -312,6 +318,7 @@ public class RuntimeInit {
         // The end of of the RuntimeInit event (see #zygoteInit).
         Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
 
+		// 调用了 invokeStaticMain 方法
         // Remaining arguments are passed to the start class's static main
         invokeStaticMain(args.startClass, args.startArgs, classLoader);
     }

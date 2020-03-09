@@ -498,6 +498,7 @@ public class ZygoteInit {
         } else {
             ClassLoader cl = null;
             if (systemServerClasspath != null) {
+				// 1. 创建了 PathClassLoader 
                 cl = createPathClassLoader(systemServerClasspath, parsedArgs.targetSdkVersion);
 
                 Thread.currentThread().setContextClassLoader(cl);
@@ -506,6 +507,7 @@ public class ZygoteInit {
             /*
              * Pass the remaining arguments to SystemServer.
              */
+            // 2. zygoteInit
             ZygoteInit.zygoteInit(parsedArgs.targetSdkVersion, parsedArgs.remainingArgs, cl);
         }
 
@@ -649,12 +651,16 @@ public class ZygoteInit {
             throw new RuntimeException(ex);
         }
 
+		// fork 后会有两个进程在下面代码开始执行，子进程pid=0，父进程pid!=0
         /* For child process */
         if (pid == 0) {
             if (hasSecondZygote(abiList)) {
                 waitForSecondaryZygote(socketName);
             }
 
+			// SystemServer 进程复制了 Zygote 进程的地址空间，因此也会得到 Zygote 进程创建的Socket，
+			// 这个 Socket 对于 SystemServer 进程没有用处
+			// 关闭 Zygote 进程创建的 Socket
             zygoteServer.closeServerSocket();
 			// 4. 处理 SystemServer 进程
             handleSystemServerProcess(parsedArgs);
@@ -777,7 +783,8 @@ public class ZygoteInit {
 
             zygoteServer.closeServerSocket();
         } catch (Zygote.MethodAndArgsCaller caller) {
-            caller.run();
+			// 调用 MethodAndArgsCaller 的 run 方法
+			caller.run();
         } catch (Throwable ex) {
             Log.e(TAG, "System zygote died with exception", ex);
             zygoteServer.closeServerSocket();
@@ -849,7 +856,9 @@ public class ZygoteInit {
         RuntimeInit.redirectLogStreams();
 
         RuntimeInit.commonInit();
+		// 1. 启动 Binder 线程池
         ZygoteInit.nativeZygoteInit();
+		// 2. 进入 SystemServer 的 main 方法
         RuntimeInit.applicationInit(targetSdkVersion, argv, classLoader);
     }
 

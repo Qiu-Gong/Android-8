@@ -92,6 +92,8 @@ public:
     {
         sp<ProcessState> proc = ProcessState::self();
         ALOGV("App process: starting thread pool.\n");
+		// 1. 启动一个 Binder 线程池，
+		// 这样 SystemServer 进程就可以使用 Binder 与其他进程进行通信了
         proc->startThreadPool();
     }
 

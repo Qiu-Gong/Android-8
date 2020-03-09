@@ -116,10 +116,12 @@ public class SystemServiceManager {
 
     public void startService(@NonNull final SystemService service) {
         // Register it.
+        // 1. 注册 Service
         mServices.add(service);
         // Start it.
         long time = System.currentTimeMillis();
         try {
+			// 2. 启动 Service
             service.onStart();
         } catch (RuntimeException ex) {
             throw new RuntimeException("Failed to start service " + service.getClass().getName()

@@ -237,6 +237,7 @@ public final class Zygote {
 
         public void run() {
             try {
+				// 1. SystemServer 的 main 方怯
                 mMethod.invoke(null, new Object[] { mArgs });
             } catch (IllegalAccessException ex) {
                 throw new RuntimeException(ex);

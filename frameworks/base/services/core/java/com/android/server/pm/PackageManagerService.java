@@ -2279,11 +2279,14 @@ public class PackageManagerService extends IPackageManager.Stub
     public static PackageManagerService main(Context context, Installer installer,
             boolean factoryTest, boolean onlyCore) {
         // Self-check for initial settings.
+        // 自检初始的设置
         PackageManagerServiceCompilerMapping.checkProperties();
 
+		// 1. 创建 PackageManagerService
         PackageManagerService m = new PackageManagerService(context, installer,
                 factoryTest, onlyCore);
         m.enableSystemUserPackages();
+		// 2. 添加到 ServiceManager 中，ServiceManager管理Binder 
         ServiceManager.addService("package", m);
         return m;
     }

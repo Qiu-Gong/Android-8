@@ -366,9 +366,11 @@ public final class SystemServer {
             android.os.Process.setThreadPriority(
                 android.os.Process.THREAD_PRIORITY_FOREGROUND);
             android.os.Process.setCanSelfBackground(false);
+			// 创建消息 Looper
             Looper.prepareMainLooper();
 
             // Initialize native services.
+            // 1. 加载了动态库 libandroid_servers.so
             System.loadLibrary("android_servers");
 
             // Check whether we failed to shut down last time we tried.
@@ -376,9 +378,11 @@ public final class SystemServer {
             performPendingShutdown();
 
             // Initialize the system context.
+            // 创建系统的 Context
             createSystemContext();
 
             // Create the system service manager.
+            // 2. 创建 systemServiceManager 对系统服务进行创建、启动和生命周期管理
             mSystemServiceManager = new SystemServiceManager(mSystemContext);
             mSystemServiceManager.setRuntimeRestarted(mRuntimeRestart);
             LocalServices.addService(SystemServiceManager.class, mSystemServiceManager);
@@ -391,8 +395,11 @@ public final class SystemServer {
         // Start services.
         try {
             traceBeginAndSlog("StartServices");
+			// 3. 启动引导服务
             startBootstrapServices();
+			// 4. 启动核心服务
             startCoreServices();
+			// 5. 启动其他服务
             startOtherServices();
             SystemServerInitThreadPool.shutdown();
         } catch (Throwable ex) {
