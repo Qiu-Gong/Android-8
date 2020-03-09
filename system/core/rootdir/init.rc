@@ -9,6 +9,7 @@ import /init.usb.rc
 import /init.${ro.hardware}.rc
 import /vendor/etc/init/hw/init.${ro.hardware}.rc
 import /init.usb.configfs.rc
+# 根据属性 ro.zygote 的内容来引人不同的文件
 import /init.${ro.zygote}.rc
 
 on early-init

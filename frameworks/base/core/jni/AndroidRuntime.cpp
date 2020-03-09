@@ -1029,6 +1029,7 @@ void AndroidRuntime::start(const char* className, const Vector<String8>& options
     JniInvocation jni_invocation;
     jni_invocation.Init(NULL);
     JNIEnv* env;
+	// 1. 启动 Java 虚拟机
     if (startVm(&mJavaVM, &env, zygote) != 0) {
         return;
     }
@@ -1037,6 +1038,7 @@ void AndroidRuntime::start(const char* className, const Vector<String8>& options
     /*
      * Register android functions.
      */
+    // 2. 为 Java 虚拟机注册 JNI 方法
     if (startReg(env) < 0) {
         ALOGE("Unable to register all android natives\n");
         return;
@@ -1055,6 +1057,7 @@ void AndroidRuntime::start(const char* className, const Vector<String8>& options
     assert(stringClass != NULL);
     strArray = env->NewObjectArray(options.size() + 1, stringClass, NULL);
     assert(strArray != NULL);
+	// 3. 从 app_main 的 main 函数得知 className 为 com.android.internal.os.ZygoteInit
     classNameStr = env->NewStringUTF(className);
     assert(classNameStr != NULL);
     env->SetObjectArrayElement(strArray, 0, classNameStr);
@@ -1069,18 +1072,22 @@ void AndroidRuntime::start(const char* className, const Vector<String8>& options
      * Start VM.  This thread becomes the main thread of the VM, and will
      * not return until the VM exits.
      */
+    // 4. 将 className 的 “.” 替换为 “／” -> com/android/internal/os/ZygoteInit
     char* slashClassName = toSlashClassName(className);
+	// 5. 找到 ZygoteInit
     jclass startClass = env->FindClass(slashClassName);
     if (startClass == NULL) {
         ALOGE("JavaVM unable to locate class '%s'\n", slashClassName);
         /* keep going */
     } else {
+    	// 6. 找到 ZygoteInit 的 main 方法
         jmethodID startMeth = env->GetStaticMethodID(startClass, "main",
             "([Ljava/lang/String;)V");
         if (startMeth == NULL) {
             ALOGE("JavaVM unable to find main() in '%s'\n", className);
             /* keep going */
         } else {
+        	// 7. 通过 JNI 调用 ZygoteInit 的 main 方法
             env->CallStaticVoidMethod(startClass, startMeth, strArray);
 
 #if 0

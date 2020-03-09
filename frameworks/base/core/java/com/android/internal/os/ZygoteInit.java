@@ -611,13 +611,17 @@ public class ZygoteInit {
             capabilities |= posixCapabilitiesAsBits(OsConstants.CAP_BLOCK_SUSPEND);
         }
         /* Hardcoded command line to start the system server */
+		// 1. 创建 args 数组，这个数组用来保存启动 SystemServer 的启动参数
         String args[] = {
-            "--setuid=1000",
-            "--setgid=1000",
+            "--setuid=1000", // 进程的用户 id 
+            "--setgid=1000", // 用户组 id
+            // 拥有用户组 1001 ～ 1010、1018、1021、1023、1032、3001~3010 的权限
             "--setgroups=1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1018,1021,1023,1032,3001,3002,3003,3006,3007,3009,3010",
             "--capabilities=" + capabilities + "," + capabilities,
+            // 进程名为 system_server 
             "--nice-name=system_server",
             "--runtime-args",
+            // 启动的类名为
             "com.android.server.SystemServer",
         };
         ZygoteConnection.Arguments parsedArgs = null;
@@ -625,11 +629,15 @@ public class ZygoteInit {
         int pid;
 
         try {
+			// 2. 将 args 数组封装成 Arguments 对象
             parsedArgs = new ZygoteConnection.Arguments(args);
             ZygoteConnection.applyDebuggerSystemProperty(parsedArgs);
             ZygoteConnection.applyInvokeWithSystemProperty(parsedArgs);
 
             /* Request to fork the system server process */
+			// 3. 创建一个子进程，也就是 SystemServer 进程
+			// 其内部会调用 nativeForkSystemServer 这个 Native 方怯， 
+			// nativeForkSystemServer 方法最终会通过 fork 函数在 当前进程 创建 一个子进程
             pid = Zygote.forkSystemServer(
                     parsedArgs.uid, parsedArgs.gid,
                     parsedArgs.gids,
@@ -648,6 +656,7 @@ public class ZygoteInit {
             }
 
             zygoteServer.closeServerSocket();
+			// 4. 处理 SystemServer 进程
             handleSystemServerProcess(parsedArgs);
         }
 
@@ -719,6 +728,7 @@ public class ZygoteInit {
                 throw new RuntimeException("No ABI list supplied.");
             }
 
+			// 1. 创建一个 Server 端的 Socket , socketName 的值为 “zygote”
             zygoteServer.registerServerSocket(socketName);
             // In some configurations, we avoid preloading resources and classes eagerly.
             // In such cases, we will preload things prior to our first fork.
@@ -726,6 +736,7 @@ public class ZygoteInit {
                 bootTimingsTraceLog.traceBegin("ZygotePreload");
                 EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
                     SystemClock.uptimeMillis());
+				// 2. 预加载类和资源
                 preload(bootTimingsTraceLog);
                 EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
                     SystemClock.uptimeMillis());
@@ -756,10 +767,12 @@ public class ZygoteInit {
             ZygoteHooks.stopZygoteNoThreadCreation();
 
             if (startSystemServer) {
+				// 3. 启动 SystemServer 进程
                 startSystemServer(abiList, socketName, zygoteServer);
             }
 
             Log.i(TAG, "Accepting command socket connections");
+			// 4. 等待 AMS 请求
             zygoteServer.runSelectLoop(abiList);
 
             zygoteServer.closeServerSocket();

@@ -53,20 +53,27 @@ class ZygoteServer {
      *
      * @throws RuntimeException when open fails
      */
+    // socketName = “zygote” 
     void registerServerSocket(String socketName) {
         if (mServerSocket == null) {
             int fileDesc;
+			// 1. 拼接 Socket 的名称 ANDROID_SOCKET_zygote
             final String fullSocketName = ANDROID_SOCKET_PREFIX + socketName;
             try {
+				// 2. 得到 Socket 的环境变量的值
                 String env = System.getenv(fullSocketName);
+				// 3. 将 Socket 环境变量的值转换为文件描述符的参数
                 fileDesc = Integer.parseInt(env);
             } catch (RuntimeException ex) {
                 throw new RuntimeException(fullSocketName + " unset or invalid", ex);
             }
 
             try {
+				// 4. 创建文件描述符
                 FileDescriptor fd = new FileDescriptor();
+				// 5.
                 fd.setInt$(fileDesc);
+				// 6. 创建服务器端 Socket
                 mServerSocket = new LocalServerSocket(fd);
             } catch (IOException ex) {
                 throw new RuntimeException(
@@ -137,11 +144,14 @@ class ZygoteServer {
         ArrayList<FileDescriptor> fds = new ArrayList<FileDescriptor>();
         ArrayList<ZygoteConnection> peers = new ArrayList<ZygoteConnection>();
 
+		// 1. 获得该 Socket 的 fd 字段的值并添加到 fd 列表 fds 中
         fds.add(mServerSocket.getFileDescriptor());
         peers.add(null);
 
+		// 无限循环等待 AMS 的请求
         while (true) {
             StructPollfd[] pollFds = new StructPollfd[fds.size()];
+			// 2. 遍历将 fds 存储的信息转移到 pollFds 数组中
             for (int i = 0; i < pollFds.length; ++i) {
                 pollFds[i] = new StructPollfd();
                 pollFds[i].fd = fds.get(i);
@@ -152,15 +162,21 @@ class ZygoteServer {
             } catch (ErrnoException ex) {
                 throw new RuntimeException("poll failed", ex);
             }
+			// 3. 对 pollFds 进行遍历，如果 i==O ，说明服务器端 Socket 与客户端连接上了
             for (int i = pollFds.length - 1; i >= 0; --i) {
                 if ((pollFds[i].revents & POLLIN) == 0) {
                     continue;
                 }
+
                 if (i == 0) {
+					// 4. 链接上：当前 Zygote 进程与 AMS 建立了链接。
+					// 通过 acceptCommandPeer 方法得到 ZygoteConnection类并添加到 Socket 连接列表 peers 中
                     ZygoteConnection newPeer = acceptCommandPeer(abiList);
                     peers.add(newPeer);
                     fds.add(newPeer.getFileDesciptor());
                 } else {
+					// 5. AMS 向 Zygote 进程发送了一个创建应用进程的请求
+					// runOnce 函数来创建一个新的应用程序进程
                     boolean done = peers.get(i).runOnce(this);
                     if (done) {
                         peers.remove(i);

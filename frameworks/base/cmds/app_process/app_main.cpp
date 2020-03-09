@@ -184,6 +184,7 @@ static const char ABI_LIST_PROPERTY[] = "ro.product.cpu.abilist32";
 static const char ZYGOTE_NICE_NAME[] = "zygote";
 #endif
 
+// ART,应用程序,SystemService 都从这里开始
 int main(int argc, char* const argv[])
 {
     if (!LOG_NDEBUG) {
@@ -269,13 +270,16 @@ int main(int argc, char* const argv[])
     String8 className;
 
     ++i;  // Skip unused "parent dir" argument.
+    // 参数 -Xzygote /system/bin --zygote --start-system-server
     while (i < argc) {
         const char* arg = argv[i++];
         if (strcmp(arg, "--zygote") == 0) {
-            zygote = true;
+			// 1. 如果当前运行在 Zygote 进程中，则将 zygote 设置为 true
+			zygote = true;
             niceName = ZYGOTE_NICE_NAME;
         } else if (strcmp(arg, "--start-system-server") == 0) {
-            startSystemServer = true;
+			// 2. 如果当前运行在 SystemServer 进程中，则将 startSystemServer 设置为 true
+			startSystemServer = true;
         } else if (strcmp(arg, "--application") == 0) {
             application = true;
         } else if (strncmp(arg, "--nice-name=", 12) == 0) {
