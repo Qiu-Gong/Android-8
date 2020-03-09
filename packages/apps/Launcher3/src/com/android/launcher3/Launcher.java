@@ -3741,7 +3741,7 @@ public class Launcher extends BaseActivity
         }
 
         if (mAppsView != null) {
-			// 1.
+			// 1. 将包含应用信息的列表 apps 传进去
             mAppsView.setApps(apps);
         }
         if (mLauncherCallbacks != null) {

@@ -4071,7 +4071,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             aInfo.applicationInfo = getAppInfoForUser(aInfo.applicationInfo, userId);
             ProcessRecord app = getProcessRecordLocked(aInfo.processName,
                     aInfo.applicationInfo.uid, true);
-			// 3. 
+			// 3. 应用程序是否已经启动
             if (app == null || app.instr == null) {
                 intent.setFlags(intent.getFlags() | Intent.FLAG_ACTIVITY_NEW_TASK);
                 final int resolvedUserId = UserHandle.getUserId(aInfo.applicationInfo.uid);
