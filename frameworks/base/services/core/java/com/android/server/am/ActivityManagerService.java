@@ -4036,16 +4036,22 @@ public class ActivityManagerService extends IActivityManager.Stub
     }
 
     Intent getHomeIntent() {
+    	//  mTopAction 值为 Intent.ACTION_MAIN
         Intent intent = new Intent(mTopAction, mTopData != null ? Uri.parse(mTopData) : null);
         intent.setComponent(mTopComponent);
         intent.addFlags(Intent.FLAG_DEBUG_TRIAGED_MISSING);
         if (mFactoryTest != FactoryTest.FACTORY_TEST_LOW_LEVEL) {
+			// 如果系统运行模式不是低级工厂模式，
+			// 则将 intent 的 Category 设置为 Intent.CATEGORY_HOME 
             intent.addCategory(Intent.CATEGORY_HOME);
         }
         return intent;
     }
 
     boolean startHomeActivityLocked(int userId, String reason) {
+    	// 1. 非工厂模式、低级工厂模式和高级工厂模式，
+    	// mTopAction 则用来描述第一个被启动 Activity组件的 Action ，
+    	// 它的默认值为 Intent.ACTION_MAIN 
         if (mFactoryTest == FactoryTest.FACTORY_TEST_LOW_LEVEL
                 && mTopAction == null) {
             // We are running in factory test mode, but unable to find
@@ -4053,6 +4059,8 @@ public class ActivityManagerService extends IActivityManager.Stub
             // error message and don't try to start anything.
             return false;
         }
+
+		// 2. 创建 Launcher 启动所需的 Intent
         Intent intent = getHomeIntent();
         ActivityInfo aInfo = resolveActivityInfo(intent, STOCK_PM_FLAGS, userId);
         if (aInfo != null) {
@@ -4063,12 +4071,14 @@ public class ActivityManagerService extends IActivityManager.Stub
             aInfo.applicationInfo = getAppInfoForUser(aInfo.applicationInfo, userId);
             ProcessRecord app = getProcessRecordLocked(aInfo.processName,
                     aInfo.applicationInfo.uid, true);
+			// 3. 
             if (app == null || app.instr == null) {
                 intent.setFlags(intent.getFlags() | Intent.FLAG_ACTIVITY_NEW_TASK);
                 final int resolvedUserId = UserHandle.getUserId(aInfo.applicationInfo.uid);
                 // For ANR debugging to verify if the user activity is the one that actually
                 // launched.
                 final String myReason = reason + ":" + userId + ":" + resolvedUserId;
+				// 4. 启动 Launcher
                 mActivityStarter.startHomeActivityLocked(intent, aInfo, myReason);
             }
         } else {
@@ -14201,6 +14211,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             } finally {
                 Binder.restoreCallingIdentity(ident);
             }
+			// 1.
             mStackSupervisor.resumeFocusedStackTopActivityLocked();
             mUserController.sendUserSwitchBroadcastsLocked(-1, currentUserId);
             traceLog.traceEnd(); // ActivityManagerStartApps

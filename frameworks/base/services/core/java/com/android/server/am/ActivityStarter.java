@@ -638,7 +638,8 @@ class ActivityStarter {
     }
 
     void startHomeActivityLocked(Intent intent, ActivityInfo aInfo, String reason) {
-        mSupervisor.moveHomeStackTaskToTop(reason);
+		// 1. 将 Launcher 放入 HomeStack 中
+		mSupervisor.moveHomeStackTaskToTop(reason);
         mLastHomeActivityStartResult = startActivityLocked(null /*caller*/, intent,
                 null /*ephemeralIntent*/, null /*resolvedType*/, aInfo, null /*rInfo*/,
                 null /*voiceSession*/, null /*voiceInteractor*/, null /*resultTo*/,

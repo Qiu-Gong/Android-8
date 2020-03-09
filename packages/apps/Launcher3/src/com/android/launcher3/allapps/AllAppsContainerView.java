@@ -242,6 +242,7 @@ public class AllAppsContainerView extends BaseContainerView implements DragSourc
     }
 
     @Override
+    // 在 AllAppsContainerView 加载完 XML 布局时调用，
     protected void onFinishInflate() {
         super.onFinishInflate();
 
@@ -271,9 +272,12 @@ public class AllAppsContainerView extends BaseContainerView implements DragSourc
         mElevationController = new HeaderElevationController(mSearchContainer);
 
         // Load the all apps recycler view
+        // 1. AllAppsRecyclerView 用来显示 App 列表
         mAppsRecyclerView = (AllAppsRecyclerView) findViewById(R.id.apps_list_view);
-        mAppsRecyclerView.setApps(mApps);
+		// 2. 将此前的 mApps 设置进去
+		mAppsRecyclerView.setApps(mApps);
         mAppsRecyclerView.setLayoutManager(mLayoutManager);
+		// 3.  AllAppsRecyclerView 设置 Adapter
         mAppsRecyclerView.setAdapter(mAdapter);
         mAppsRecyclerView.setHasFixedSize(true);
         mAppsRecyclerView.addOnScrollListener(mElevationController);

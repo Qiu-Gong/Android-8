@@ -133,7 +133,8 @@ public class LauncherAppState {
 
     LauncherModel setLauncher(Launcher launcher) {
         getLocalProvider(mContext).setLauncherProviderChangeListener(launcher);
-        mModel.initialize(launcher);
+		// 1. LauncherModel.initialize
+		mModel.initialize(launcher);
         return mModel;
     }
 

@@ -119,6 +119,7 @@ public class LauncherModel extends BroadcastReceiver
     @Thunk boolean mHasLoaderCompletedOnce;
     @Thunk boolean mIsManagedHeuristicAppsUpdated;
 
+	// 1. 创建了具有消息循环的线程 HandlerThread 对象
     @Thunk static final HandlerThread sWorkerThread = new HandlerThread("launcher-loader");
     static {
         sWorkerThread.start();
@@ -553,12 +554,14 @@ public class LauncherModel extends BroadcastReceiver
 
                 // If there is already one running, tell it to stop.
                 stopLoaderLocked();
+				// 3. 创建 LoaderTask
                 mLoaderTask = new LoaderTask(mApp.getContext(), synchronousBindPage);
                 if (synchronousBindPage != PagedView.INVALID_RESTORE_PAGE
                         && mModelLoaded && !mIsLoaderTaskRunning) {
                     mLoaderTask.runBindSynchronousPage(synchronousBindPage);
                     return true;
                 } else {
+					// 4. 将 LoaderTask 作为消息发送给 HandlerThread
                     sWorkerThread.setPriority(Thread.NORM_PRIORITY);
                     sWorker.post(mLoaderTask);
                 }
@@ -697,15 +700,20 @@ public class LauncherModel extends BroadcastReceiver
                 mIsLoaderTaskRunning = true;
             }
 
+			// Launcher 是用工作区的形式来显示系统安装的应用程序的快捷图标的，
+			// 每一个工作区都是用来描述一个抽象桌面的，它由n个屏幕组成，
+			// 每个屏幕又分为 n 个单元格，每个单元格用来显示一个应用程序的快捷图标
             try {
                 if (DEBUG_LOADERS) Log.d(TAG, "step 1.1: loading workspace");
                 // Set to false in bindWorkspace()
                 mIsLoadingAndBindingWorkspace = true;
+				// 1. 加载工作区信息
                 loadWorkspace();
 
                 verifyNotStopped();
                 if (DEBUG_LOADERS) Log.d(TAG, "step 1.2: bind workspace workspace");
-                bindWorkspace(mPageToBindFirst);
+				// 2. 绑定工作区信息
+				bindWorkspace(mPageToBindFirst);
 
                 // Take a break
                 if (DEBUG_LOADERS) Log.d(TAG, "step 1 completed, wait for idle");
@@ -714,7 +722,8 @@ public class LauncherModel extends BroadcastReceiver
 
                 // second step
                 if (DEBUG_LOADERS) Log.d(TAG, "step 2.1: loading all apps");
-                loadAllApps();
+				// 3. 加载系统已经安装的应用程序信息
+				loadAllApps();
 
                 verifyNotStopped();
                 if (DEBUG_LOADERS) Log.d(TAG, "step 2.2: Update icon cache");
@@ -1764,6 +1773,7 @@ public class LauncherModel extends BroadcastReceiver
                     final long bindTime = SystemClock.uptimeMillis();
                     final Callbacks callbacks = tryGetCallbacks(oldCallbacks);
                     if (callbacks != null) {
+						// 1.
                         callbacks.bindAllApplications(added);
                         if (DEBUG_LOADERS) {
                             Log.d(TAG, "bound " + added.size() + " apps in "

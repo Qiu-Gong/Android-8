@@ -78,6 +78,7 @@
             android:taskAffinity=""
             android:enabled="true">
             <intent-filter>
+            	<!-- 与 AMS startHomeActivityLocked MAIN，HOME 一致-->
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />

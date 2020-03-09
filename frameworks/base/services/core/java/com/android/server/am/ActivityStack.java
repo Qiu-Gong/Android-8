@@ -2212,6 +2212,7 @@ class ActivityStack<T extends StackWindowController> extends ConfigurationContai
         try {
             // Protect against recursion.
             mStackSupervisor.inResumeTopActivity = true;
+			// 1. resumeTopActivityInnerLocked()
             result = resumeTopActivityInnerLocked(prev, options);
         } finally {
             mStackSupervisor.inResumeTopActivity = false;
@@ -2302,6 +2303,7 @@ class ActivityStack<T extends StackWindowController> extends ConfigurationContai
             } else if (!isHomeStack()){
                 if (DEBUG_STATES) Slog.d(TAG_STATES,
                         "resumeTopActivityLocked: Launching home next");
+				// 1. ActivityStackSuperviser.resumeHomeStackTask()
                 return isOnHomeDisplay() &&
                         mStackSupervisor.resumeHomeStackTask(prev, "prevFinished");
             }

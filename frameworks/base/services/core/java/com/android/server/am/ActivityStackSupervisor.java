@@ -770,6 +770,7 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
             moveFocusableActivityStackToFrontLocked(r, myReason);
             return resumeFocusedStackTopActivityLocked(mHomeStack, prev, null);
         }
+		// 1. AMS.startHomeActivityLocked()
         return mService.startHomeActivityLocked(mCurrentUser, myReason);
     }
 
@@ -2059,6 +2060,8 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
     boolean resumeFocusedStackTopActivityLocked(
             ActivityStack targetStack, ActivityRecord target, ActivityOptions targetOptions) {
         if (targetStack != null && isFocusedStack(targetStack)) {
+			// 1. ActivityStack 对象是用来描述 Activity 堆栈的，
+			// ActivityStack.resumeTopActivityUncheckedLocked
             return targetStack.resumeTopActivityUncheckedLocked(target, targetOptions);
         }
         final ActivityRecord r = mFocusedStack.topRunningActivityLocked();

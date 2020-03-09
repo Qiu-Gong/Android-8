@@ -361,6 +361,7 @@ public class Launcher extends BaseActivity
 
         super.onCreate(savedInstanceState);
 
+		// 1.  LauncherAppState 的实例
         LauncherAppState app = LauncherAppState.getInstance(this);
 
         // Load configuration-specific DeviceProfile
@@ -374,6 +375,7 @@ public class Launcher extends BaseActivity
 
         mSharedPrefs = Utilities.getPrefs(this);
         mIsSafeModeEnabled = getPackageManager().isSafeMode();
+		// 2. 将 Launcher 对象传人
         mModel = app.setLauncher(this);
         mModelWriter = mModel.getWriter(mDeviceProfile.isVerticalBarLayout());
         mIconCache = app.getIconCache();
@@ -419,6 +421,7 @@ public class Launcher extends BaseActivity
         if (savedInstanceState != null) {
             currentScreen = savedInstanceState.getInt(RUNTIME_STATE_CURRENT_SCREEN, currentScreen);
         }
+		// 3. LauncherModel.startLoader()
         if (!mModel.startLoader(currentScreen)) {
             // If we are not binding synchronously, show a fade in animation when
             // the first page bind completes.
@@ -3738,6 +3741,7 @@ public class Launcher extends BaseActivity
         }
 
         if (mAppsView != null) {
+			// 1.
             mAppsView.setApps(apps);
         }
         if (mLauncherCallbacks != null) {
