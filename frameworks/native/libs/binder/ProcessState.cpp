@@ -58,7 +58,12 @@ public:
 protected:
     virtual bool threadLoop()
     {
-        IPCThreadState::self()->joinThreadPool(mIsMain);
+		// 1. 调用 IPCThreadState 的 joinThreadPool 函数，
+		// 将当前线程注册到 Binder 驱动程序中，这样我们创建的线程就加入了 Binder 线程池中，
+		// 新创建的应用程序进程就支持 Binder 进程间通信了，我们只需要创建当前进程的 Binder 对
+		// 象，并将它注册到 ServiceManager 中就可以实现 Binder 进程间通信 ， 而不必关心进程间是
+		// 如何通过 Binder 进行通信的
+		IPCThreadState::self()->joinThreadPool(mIsMain);
         return false;
     }
     
@@ -145,6 +150,7 @@ sp<IBinder> ProcessState::getContextObject(const String16& name, const sp<IBinde
 void ProcessState::startThreadPool()
 {
     AutoMutex _l(mLock);
+	// 1. 先检查这个标记，从而确保 Binder 线程地只会被启动一次
     if (!mThreadPoolStarted) {
         mThreadPoolStarted = true;
         spawnPooledThread(true);
@@ -303,6 +309,7 @@ void ProcessState::spawnPooledThread(bool isMain)
         String8 name = makeBinderThreadName();
         ALOGV("Spawning new pooled thread, name=%s\n", name.string());
         sp<Thread> t = new PoolThread(isMain);
+		// 1. 调用 PoolThread 的 run 函数来启动一个新的线程
         t->run(name.string());
     }
 }

@@ -6521,13 +6521,14 @@ public final class ActivityThread {
         TrustedCertificateStore.setDefaultUserDirectory(configDir);
 
         Process.setArgV0("<pre-initialized>");
-
+		// 1. 创建主线程 Looper
         Looper.prepareMainLooper();
-
+		// 2. 创建 ActivityThread 
         ActivityThread thread = new ActivityThread();
         thread.attach(false);
-
+		// 判断 Handler 类型的 sMainThreadHandler 是否为 null 
         if (sMainThreadHandler == null) {
+			// 4. 创建主线程 H 类
             sMainThreadHandler = thread.getHandler();
         }
 
@@ -6538,6 +6539,7 @@ public final class ActivityThread {
 
         // End of event ActivityThreadMain.
         Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+		// 5. Looper 开始工作
         Looper.loop();
 
         throw new RuntimeException("Main thread loop unexpectedly exited");

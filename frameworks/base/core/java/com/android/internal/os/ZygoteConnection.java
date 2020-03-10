@@ -138,6 +138,7 @@ class ZygoteConnection {
         FileDescriptor[] descriptors;
 
         try {
+			// 1. 获取应用程序进程的启动参数
             args = readArgumentList();
             descriptors = mSocket.getAncillaryFileDescriptors();
         } catch (IOException ex) {
@@ -165,6 +166,7 @@ class ZygoteConnection {
         FileDescriptor serverPipeFd = null;
 
         try {
+			// 2.
             parsedArgs = new Arguments(args);
 
             if (parsedArgs.abiListQuery) {
@@ -236,6 +238,7 @@ class ZygoteConnection {
 
             fd = null;
 
+			// 3. 创建应用程序进程
             pid = Zygote.forkAndSpecialize(parsedArgs.uid, parsedArgs.gid, parsedArgs.gids,
                     parsedArgs.debugFlags, rlimits, parsedArgs.mountExternal, parsedArgs.seInfo,
                     parsedArgs.niceName, fdsToClose, fdsToIgnore, parsedArgs.instructionSet,
@@ -250,11 +253,13 @@ class ZygoteConnection {
         }
 
         try {
+			// 当前代码逻辑运行在子进程中
             if (pid == 0) {
                 // in child
                 zygoteServer.closeServerSocket();
                 IoUtils.closeQuietly(serverPipeFd);
                 serverPipeFd = null;
+				// 处理应用程序进程
                 handleChildProc(parsedArgs, descriptors, childPipeFd, newStderr);
 
                 // should never get here, the child is expected to either
@@ -820,6 +825,7 @@ class ZygoteConnection {
                     VMRuntime.getCurrentInstructionSet(),
                     pipeFd, parsedArgs.remainingArgs);
         } else {
+			// 同启动 SystemServer
             ZygoteInit.zygoteInit(parsedArgs.targetSdkVersion,
                     parsedArgs.remainingArgs, null /* classLoader */);
         }

@@ -259,6 +259,9 @@ int register_com_android_internal_os_ZygoteInit(JNIEnv* env)
 
 /*static*/ JavaVM* AndroidRuntime::mJavaVM = NULL;
 
+// AppRuntime 继承自 AndroidRuntime, AppRuntime 创建时就会调用 AndroidRuntime 的
+// 构造函数，gCurRuntime 就会被初始化，它指向的是 AppRuntime 
+// 我们来查看 AppRuntime的 onZygoteInit 函数， AppRuntime 在 app_main.cpp 中实现，
 AndroidRuntime::AndroidRuntime(char* argBlockStart, const size_t argBlockLength) :
         mExitWithoutCleanup(false),
         mArgBlockStart(argBlockStart),

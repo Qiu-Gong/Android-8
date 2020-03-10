@@ -250,6 +250,7 @@ public class ZygoteProcess {
      *
      * @throws ZygoteStartFailedEx if process start failed for any reason
      */
+     // ZygoteState：表示与 Zygote 进程通信的状态
     @GuardedBy("mLock")
     private static Process.ProcessStartResult zygoteSendArgsAndGetResult(
             ZygoteState zygoteState, ArrayList<String> args)
@@ -339,8 +340,9 @@ public class ZygoteProcess {
                                                       String invokeWith,
                                                       String[] extraArgs)
                                                       throws ZygoteStartFailedEx {
-        ArrayList<String> argsForZygote = new ArrayList<String>();
-
+		// 1. 创建字符串列表 argsForZygote ， 并将应用进程的启 动参数保存在 argsForZygote 中
+		ArrayList<String> argsForZygote = new ArrayList<String>();
+		
         // --runtime-args, --setuid=, --setgid=,
         // and --setgroups= must go first
         argsForZygote.add("--runtime-args");
@@ -428,6 +430,8 @@ public class ZygoteProcess {
         }
 
         synchronized(mLock) {
+        	// 1. openZygoteSocketIfNeeded()
+        	// 将传入的应用进程的启动参数 argsForZygote 写入 ZygoteState 中
             return zygoteSendArgsAndGetResult(openZygoteSocketIfNeeded(abi), argsForZygote);
         }
     }
@@ -457,25 +461,31 @@ public class ZygoteProcess {
 
         if (primaryZygoteState == null || primaryZygoteState.isClosed()) {
             try {
+				// 1. 与 Zygote 进程建立 Socket 连接
+				// mSocket = zygote
                 primaryZygoteState = ZygoteState.connect(mSocket);
             } catch (IOException ioe) {
                 throw new ZygoteStartFailedEx("Error connecting to primary zygote", ioe);
             }
         }
 
+		//2. 连接 Zygote 主模式返回的 ZygoteState 是否与启动应用程序进程所需要的ABI匹配
         if (primaryZygoteState.matches(abi)) {
             return primaryZygoteState;
         }
 
         // The primary zygote didn't match. Try the secondary.
+        // ／如果不匹配，则尝试连接 Zygote 辅模式
         if (secondaryZygoteState == null || secondaryZygoteState.isClosed()) {
             try {
+				// 3. mSecondarySocket = zygote_secondarγ
                 secondaryZygoteState = ZygoteState.connect(mSecondarySocket);
             } catch (IOException ioe) {
                 throw new ZygoteStartFailedEx("Error connecting to secondary zygote", ioe);
             }
         }
 
+		// 连接 Zygote 辅模式返回的 ZygoteState 是否与启动应用程序进程所需要的 ABI 匹配
         if (secondaryZygoteState.matches(abi)) {
             return secondaryZygoteState;
         }

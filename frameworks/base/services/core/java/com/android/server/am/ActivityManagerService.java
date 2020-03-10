@@ -3793,6 +3793,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 throw e.rethrowAsRuntimeException();
             }
 
+			// 1. 获取要创建的应用程序进程的用户 ID
             int uid = app.uid;
             int[] gids = null;
             int mountExternal = Zygote.MOUNT_EXTERNAL_NONE;
@@ -3815,6 +3816,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                  * Add shared application and profile GIDs so applications can share some
                  * resources like shared libraries and access user-wide resources
                  */
+                 //2. 对 gids 进行创建和赋值
                 if (ArrayUtils.isEmpty(permGids)) {
                     gids = new int[3];
                 } else {
@@ -3911,6 +3913,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             // Start the process.  It will either succeed and return a result containing
             // the PID of the new process, or else throw a RuntimeException.
             boolean isActivityProcess = (entryPoint == null);
+			// 3. 应用程序进程主线程的类名
             if (entryPoint == null) entryPoint = "android.app.ActivityThread";
             Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "Start proc: " +
                     app.processName);
@@ -3922,6 +3925,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                         app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,
                         app.info.dataDir, null, entryPointArgs);
             } else {
+				// 4. 启动应用程序进程
                 startResult = Process.start(entryPoint,
                         app.processName, uid, uid, gids, debugFlags, mountExternal,
                         app.info.targetSdkVersion, seInfo, requiredAbi, instructionSet,
