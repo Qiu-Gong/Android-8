@@ -18161,6 +18161,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             final long origId = Binder.clearCallingIdentity();
             ComponentName res;
             try {
+				// 1.
                 res = mServices.startServiceLocked(caller, service,
                         resolvedType, callingPid, callingUid,
                         requireForeground, callingPackage, userId);

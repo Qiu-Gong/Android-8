@@ -344,6 +344,7 @@ public final class ActiveServices {
             callerFg = true;
         }
 
+		// 1.  查找是否有与参数 service 对应的 ServiceRecord
         ServiceLookupResult res =
             retrieveServiceLocked(service, resolvedType, callingPackage,
                     callingPid, callingUid, userId, true, callerFg, false);
@@ -355,6 +356,7 @@ public final class ActiveServices {
                     ? res.permission : "private to package");
         }
 
+		// 2.
         ServiceRecord r = res.record;
 
         if (!mAm.mUserController.exists(r.userId)) {
@@ -1653,6 +1655,9 @@ public final class ActiveServices {
         }
     }
 
+	// retrieveServiceLocked 方法会查找是否有与参数 service 对应的
+	// ServiceRecord，如果没有找到，就会调用 PackageManagerService 去获取参数 service 对应的
+	// Service 信息，并封装到 ServiceRecord 中，最后将 ServiceRecord 封装为 ServiceLookupResult 返回
     private ServiceLookupResult retrieveServiceLocked(Intent service,
             String resolvedType, String callingPackage, int callingPid, int callingUid, int userId,
             boolean createIfNeeded, boolean callingFromFg, boolean isBindExternal) {
@@ -2105,18 +2110,23 @@ public final class ActiveServices {
         }
 
         final boolean isolated = (r.serviceInfo.flags&ServiceInfo.FLAG_ISOLATED_PROCESS) != 0;
-        final String procName = r.processName;
+		// 1. 获取 Service 想要在哪个进程中运行
+		final String procName = r.processName;
         String hostingType = "service";
         ProcessRecord app;
 
         if (!isolated) {
+			// 2. 将 procName 和 Service 的 uid 传入到 AMS 的 getProcessRecordLocked 方法中，
+			// 查询是否存在一个与 Service 对应的 ProcessRecord 类型的对象 app
             app = mAm.getProcessRecordLocked(procName, r.appInfo.uid, false);
             if (DEBUG_MU) Slog.v(TAG_MU, "bringUpServiceLocked: appInfo.uid=" + r.appInfo.uid
                         + " app=" + app);
-            if (app != null && app.thread != null) {
+			// 3. 如果运行 Service 的应用程序进程存在
+			if (app != null && app.thread != null) {
                 try {
                     app.addPackage(r.appInfo.packageName, r.appInfo.versionCode, mAm.mProcessStats);
-                    realStartServiceLocked(r, app, execInFg);
+					// 4. 启动 Service
+					realStartServiceLocked(r, app, execInFg);
                     return null;
                 } catch (TransactionTooLargeException e) {
                     throw e;
@@ -2143,7 +2153,9 @@ public final class ActiveServices {
 
         // Not running -- get it started, and enqueue this service record
         // to be executed when the app comes up.
+        // 5. 如果用来运行 Service 的应用程序进程不存在
         if (app == null && !permissionsReviewRequired) {
+			// 6. 创建应用程序进程
             if ((app=mAm.startProcessLocked(procName, r.appInfo, true, intentFlags,
                     hostingType, r.name, false, isolated, false)) == null) {
                 String msg = "Unable to launch app "

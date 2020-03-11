@@ -3394,11 +3394,14 @@ public final class ActivityThread {
         // we are back active so skip it.
         unscheduleGcIdler();
 
+		// 1. 获取要启动 Service 的应用程序的 LoadedApk
         LoadedApk packageInfo = getPackageInfoNoCheck(
                 data.info.applicationInfo, data.compatInfo);
         Service service = null;
         try {
+			// 2. 获取类加载器
             java.lang.ClassLoader cl = packageInfo.getClassLoader();
+			// 3. 创建 Service 实例
             service = (Service) cl.loadClass(data.info.name).newInstance();
         } catch (Exception e) {
             if (!mInstrumentation.onException(service, e)) {
@@ -3411,13 +3414,17 @@ public final class ActivityThread {
         try {
             if (localLOGV) Slog.v(TAG, "Creating service " + data.info.name);
 
+			// 4. 创建 Service 的上下文环境 ContextImpl 对象 
             ContextImpl context = ContextImpl.createAppContext(this, packageInfo);
             context.setOuterContext(service);
 
             Application app = packageInfo.makeApplication(false, mInstrumentation);
-            service.attach(context, this, data.info.name, data.token, app,
+			// 5. 初始化 Service
+			service.attach(context, this, data.info.name, data.token, app,
                     ActivityManager.getService());
+			// 6.
             service.onCreate();
+			// 7.
             mServices.put(data.token, service);
             try {
                 ActivityManager.getService().serviceDoneExecuting(
