@@ -18306,6 +18306,7 @@ public class ActivityManagerService extends IActivityManager.Stub
         }
 
         synchronized(this) {
+        	// 1. ActiveServices.bindServiceLocked
             return mServices.bindServiceLocked(caller, token, service,
                     resolvedType, connection, flags, callingPackage, userId);
         }

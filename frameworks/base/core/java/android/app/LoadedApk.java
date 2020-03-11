@@ -1403,6 +1403,7 @@ public final class LoadedApk {
                 sd = map.get(c);
             }
             if (sd == null) {
+				// 将 ServiceConnection 与 ServiceDispatcher 关联
                 sd = new ServiceDispatcher(c, context, handler, flags);
                 if (DEBUG) Slog.d(TAG, "Creating new dispatcher " + sd + " for conn " + c);
                 if (map == null) {
@@ -1492,10 +1493,12 @@ public final class LoadedApk {
                 mDispatcher = new WeakReference<LoadedApk.ServiceDispatcher>(sd);
             }
 
+			// 当外部调用 connected 时，会转而调用 LoadedApk.ServiceDispatcher.connected
             public void connected(ComponentName name, IBinder service, boolean dead)
                     throws RemoteException {
                 LoadedApk.ServiceDispatcher sd = mDispatcher.get();
                 if (sd != null) {
+					// 1.
                     sd.connected(name, service, dead);
                 }
             }
@@ -1506,6 +1509,7 @@ public final class LoadedApk {
 
         ServiceDispatcher(ServiceConnection conn,
                 Context context, Handler activityThread, int flags) {
+            // ServiceDispatcher.InnerConnection 与 ServiceConnection 关联
             mIServiceConnection = new InnerConnection(this);
             mConnection = conn;
             mContext = context;
@@ -1565,8 +1569,10 @@ public final class LoadedApk {
             return mUnbindLocation;
         }
 
+		// 从 InnerConnection.connected 转过来执行 doConnected
         public void connected(ComponentName name, IBinder service, boolean dead) {
             if (mActivityThread != null) {
+				// RunConnection 也是调用 doConnected
                 mActivityThread.post(new RunConnection(name, service, 0, dead));
             } else {
                 doConnected(name, service, dead);
@@ -1631,6 +1637,7 @@ public final class LoadedApk {
             }
             // If there is a new service, it is now connected.
             if (service != null) {
+				// 执行回调 ServiceConnection.onServiceConnected
                 mConnection.onServiceConnected(name, service);
             }
         }

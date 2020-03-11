@@ -1400,8 +1400,18 @@ public final class ActiveServices {
             mAm.grantEphemeralAccessLocked(callerApp.userId, service,
                     s.appInfo.uid, UserHandle.getAppId(callerApp.uid));
 
+			// AppBindRecord:应用程序进程通过 Intent 绑定 Service 时，会通过 AppBindRecord
+			// 来维护 Service 与应用程序进程之间的关联
+			// 其内部存储了谁绑定的 Service(ProcessRecord)、
+			// 被绑定的 Service(AppBindRecord)、
+			// 绑定 Service 的 Intent(IntentBindRecord)和
+			// 所有绑定通信记录的信息(ArraySet<ConnectionRecord>)
+			// 1. 调用了 ServiceRecord 的 retrieveAppBindingLocked 方告来获得
+			//    AppBindRecord, retrieveAppBindingLocked 方法内部创建 IntentBindRecord，并对
+			//    IntentBindRecord 的成员变量进行赋值
             AppBindRecord b = s.retrieveAppBindingLocked(service, callerApp);
-            ConnectionRecord c = new ConnectionRecord(b, activity,
+			// ConnectionRecord: 用于描述应用程序进程和 Service 建立的一次通信。
+			ConnectionRecord c = new ConnectionRecord(b, activity,
                     connection, flags, clientLabel, clientIntent);
 
             IBinder binder = connection.asBinder();
@@ -1437,6 +1447,7 @@ public final class ActiveServices {
 
             if ((flags&Context.BIND_AUTO_CREATE) != 0) {
                 s.lastActivity = SystemClock.uptimeMillis();
+				// 2. 启动 Service 步骤同 Service启动流程
                 if (bringUpServiceLocked(s, service.getFlags(), callerFg, false,
                         permissionsReviewRequired) != null) {
                     return 0;
@@ -1460,11 +1471,16 @@ public final class ActiveServices {
                     + ": received=" + b.intent.received
                     + " apps=" + b.intent.apps.size()
                     + " doRebind=" + b.intent.doRebind);
-
-            if (s.app != null && b.intent.received) {
+			
+			// 3. s.app!=null,Service已经运行。s是ServiceRecord类型对象,app是ProcessRecord类型对象。
+			// b.intent.received 表示当前应用程序进程已经接收到绑定 Service 时返回的 Binder，
+			// 这样应用程序进程就可以通过 Binder 来获取要绑定的 Service 的访问接口。
+			// 简单说，onServiceConnected(IBinder service) 收到 binder
+			if (s.app != null && b.intent.received) {
                 // Service is already running, so we can immediately
                 // publish the connection.
                 try {
+					// 4. 
                     c.conn.connected(s.name, b.intent.binder, false);
                 } catch (Exception e) {
                     Slog.w(TAG, "Failure sending service " + s.shortName
@@ -1475,11 +1491,17 @@ public final class ActiveServices {
                 // If this is the first app connected back to this binding,
                 // and the service had previously asked to be told when
                 // rebound, then do so.
+                // 5.如果当前应用程序进程是第一个与 Service 进行绑定的，
+                // 并且 Service 已经调用过 onUnBind 方法
                 if (b.intent.apps.size() == 1 && b.intent.doRebind) {
+					// 6.
                     requestServiceBindingLocked(s, b.intent, callerFg, true);
                 }
+
+			// 7.	应用程序进程的 Client 端没有发送过绑定 Service 的请求
             } else if (!b.intent.requested) {
-                requestServiceBindingLocked(s, b.intent, callerFg, false);
+				// 8.
+				requestServiceBindingLocked(s, b.intent, callerFg, false);
             }
 
             getServiceMapLocked(s.userId).ensureNotStartingBackgroundLocked(s);
@@ -1519,6 +1541,7 @@ public final class ActiveServices {
                             }
                             if (DEBUG_SERVICE) Slog.v(TAG_SERVICE, "Publishing to: " + c);
                             try {
+								// 链接 connected
                                 c.conn.connected(r.name, service, false);
                             } catch (Exception e) {
                                 Slog.w(TAG, "Failure sending service " + r.name +
@@ -1850,11 +1873,15 @@ public final class ActiveServices {
         }
         if (DEBUG_SERVICE) Slog.d(TAG_SERVICE, "requestBind " + i + ": requested=" + i.requested
                 + " rebind=" + rebind);
-        if ((!i.requested || rebind) && i.apps.size() > 0) {
+		// !i.requested || rebind = true 发送过请求，重新绑定
+		// AMS 会为每个绑定 Service 的 Intent 分配一个 IntentBindRecord 类型对象
+		// 表示所有用当前 Intent 绑定 Service 的应用程序进程个数大于 0 
+		if ((!i.requested || rebind) && i.apps.size() > 0) {
             try {
                 bumpServiceExecutingLocked(r, execInFg, "bind");
                 r.app.forceProcessStateUpTo(ActivityManager.PROCESS_STATE_SERVICE);
-                r.app.thread.scheduleBindService(r, i.intent.getIntent(), rebind,
+				// 1. ActivityThread.scheduleBindService
+				r.app.thread.scheduleBindService(r, i.intent.getIntent(), rebind,
                         r.app.repProcState);
                 if (!rebind) {
                     i.requested = true;

@@ -3442,6 +3442,7 @@ public final class ActivityThread {
     }
 
     private void handleBindService(BindServiceData data) {
+    	// 1. 获取要绑定的 Service
         Service s = mServices.get(data.token);
         if (DEBUG_SERVICE)
             Slog.v(TAG, "handleBindService s=" + s + " rebind=" + data.rebind);
@@ -3450,11 +3451,15 @@ public final class ActivityThread {
                 data.intent.setExtrasClassLoader(s.getClassLoader());
                 data.intent.prepareToEnterProcess();
                 try {
+					// 2. rebind = false
                     if (!data.rebind) {
+						// 3. Service 的 onBind 方怯
                         IBinder binder = s.onBind(data.intent);
+						// 4. 
                         ActivityManager.getService().publishService(
                                 data.token, data.intent, binder);
                     } else {
+						// 5. rebind 的值为 true 就会调用 Service 的 onRebind 方泣
                         s.onRebind(data.intent);
                         ActivityManager.getService().serviceDoneExecuting(
                                 data.token, SERVICE_DONE_EXECUTING_ANON, 0, 0);

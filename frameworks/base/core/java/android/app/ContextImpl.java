@@ -1587,6 +1587,7 @@ class ContextImpl extends Context {
             throw new IllegalArgumentException("connection is null");
         }
         if (mPackageInfo != null) {
+			// 1. 绑定 ServiceConnection 与 LoadedApk.ServiceDispatcher.InnerConnection
             sd = mPackageInfo.getServiceDispatcher(conn, getOuterContext(), handler, flags);
         } else {
             throw new RuntimeException("Not supported in system context");
@@ -1600,6 +1601,7 @@ class ContextImpl extends Context {
                 flags |= BIND_WAIVE_PRIORITY;
             }
             service.prepareToLeaveProcess(this);
+			// 2. AMS.bindService
             int res = ActivityManager.getService().bindService(
                 mMainThread.getApplicationThread(), getActivityToken(), service,
                 service.resolveTypeIfNeeded(getContentResolver()),

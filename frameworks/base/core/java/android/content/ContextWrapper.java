@@ -676,6 +676,7 @@ public class ContextWrapper extends Context {
     @Override
     public boolean bindService(Intent service, ServiceConnection conn,
             int flags) {
+        // ContextImpl.bindService 
         return mBase.bindService(service, conn, flags);
     }
 
