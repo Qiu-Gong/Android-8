@@ -2718,6 +2718,7 @@ public class Launcher extends BaseActivity
         UserHandle user = item == null ? null : item.user;
 
         // Prepare intent
+        // 1. 将 Flag 设置为 Intent.FLAG_ACTIVITY_NEW_TASK
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (v != null) {
             intent.setSourceBounds(getViewBounds(v));
@@ -2732,6 +2733,7 @@ public class Launcher extends BaseActivity
                 startShortcutIntentSafely(intent, optsBundle, item);
             } else if (user == null || user.equals(Process.myUserHandle())) {
                 // Could be launching some bookkeeping activity
+                // 2. 调用 startActivity 方法
                 startActivity(intent, optsBundle);
             } else {
                 LauncherAppsCompat.getInstance(this).startActivityForProfile(

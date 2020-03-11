@@ -4204,7 +4204,9 @@ public class ActivityManager {
             new Singleton<IActivityManager>() {
                 @Override
                 protected IActivityManager create() {
+                	// 1. 得到名为 “activity” 的 Service 引用，也就是 IBinder 类型的 AMS 的引用 
                     final IBinder b = ServiceManager.getService(Context.ACTIVITY_SERVICE);
+					// 2. 将它转换成 IActivityManager 类型的对象，这段代码采用的是 AIDL
                     final IActivityManager am = IActivityManager.Stub.asInterface(b);
                     return am;
                 }

@@ -4466,8 +4466,11 @@ public class Activity extends ContextThemeWrapper
      */
     public void startActivityForResult(@RequiresPermission Intent intent, int requestCode,
             @Nullable Bundle options) {
+        // 1.  mParent 是 Activity 类型的，表示当前 Activity 的父类。 
+        // 因为目前根 Activity 还没有创建出来，因此 mParent == null 成立
         if (mParent == null) {
             options = transferSpringboardActivityOptions(options);
+			// 2. Instrumentation.execStartActivity
             Instrumentation.ActivityResult ar =
                 mInstrumentation.execStartActivity(
                     this, mMainThread.getApplicationThread(), mToken, this,

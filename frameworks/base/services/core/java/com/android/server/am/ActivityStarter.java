@@ -262,6 +262,7 @@ class ActivityStarter {
             ActivityRecord[] outActivity, ActivityStackSupervisor.ActivityContainer container,
             TaskRecord inTask, String reason) {
 
+		// 1. 判断启动的理由不为空
         if (TextUtils.isEmpty(reason)) {
             throw new IllegalArgumentException("Need to specify a reason.");
         }
@@ -297,9 +298,12 @@ class ActivityStarter {
                 = options != null ? options.popAppVerificationBundle() : null;
 
         ProcessRecord callerApp = null;
+		// 1. caller 指向的是 Launcher 所在的应用程序进程的 ApplicationThread 对象
         if (caller != null) {
+			// 2. 得到 Launcher 进程 callerApp 对象
             callerApp = mService.getRecordForAppLocked(caller);
             if (callerApp != null) {
+				// 获取 Launcher 进程的 pid 和 uid
                 callingPid = callerApp.pid;
                 callingUid = callerApp.info.uid;
             } else {
@@ -523,12 +527,13 @@ class ActivityStarter {
 
             aInfo = mSupervisor.resolveActivity(intent, rInfo, startFlags, null /*profilerInfo*/);
         }
-
+		// 创建即将要启动的 Activity 的描述类 ActivityRecord
         ActivityRecord r = new ActivityRecord(mService, callerApp, callingPid, callingUid,
                 callingPackage, intent, resolvedType, aInfo, mService.getGlobalConfiguration(),
                 resultRecord, resultWho, requestCode, componentSpecified, voiceSession != null,
                 mSupervisor, container, options, sourceRecord);
         if (outActivity != null) {
+			// 3. 创建的 ActivityRecord 赋值给 ActivityRecord 类型的 outActivity
             outActivity[0] = r;
         }
 
@@ -564,6 +569,7 @@ class ActivityStarter {
 
         doPendingActivityLaunchesLocked(false);
 
+		// 4.
         return startActivity(r, sourceRecord, voiceSession, voiceInteractor, startFlags, true,
                 options, inTask, outActivity);
     }
@@ -822,6 +828,8 @@ class ActivityStarter {
             }
 
             final ActivityRecord[] outRecord = new ActivityRecord[1];
+			// inTask: 代表启动的 Activity 所在的栈
+			// reason: startActivityAsUser 代表启动的理由
             int res = startActivityLocked(caller, intent, ephemeralIntent, resolvedType,
                     aInfo, rInfo, voiceSession, voiceInteractor,
                     resultTo, resultWho, requestCode, callingPid,
@@ -1000,6 +1008,7 @@ class ActivityStarter {
         int result = START_CANCELED;
         try {
             mService.mWindowManager.deferSurfaceLayout();
+			// 1. 
             result = startActivityUnchecked(r, sourceRecord, voiceSession, voiceInteractor,
                     startFlags, doResume, options, inTask, outActivity);
         } finally {
@@ -1020,6 +1029,7 @@ class ActivityStarter {
     }
 
     // Note: This method should only be called from {@link startActivity}.
+    // 处理与栈管理相关的逻辑
     private int startActivityUnchecked(final ActivityRecord r, ActivityRecord sourceRecord,
             IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
             int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask,
@@ -1182,9 +1192,12 @@ class ActivityStarter {
 
         // Should this be considered a new task?
         int result = START_SUCCESS;
+		// 1. 启动根 Activity 时会将 Intent 的 Flag 设置为 FLAG_ACTIVITY_NEW_TASK
         if (mStartActivity.resultTo == null && mInTask == null && !mAddingToTask
                 && (mLaunchFlags & FLAG_ACTIVITY_NEW_TASK) != 0) {
             newTask = true;
+			// 2. 创建新的 TaskRecord
+			// 内部会创建一个新的 TaskRecord，用来描述一个 Activity 任务栈
             result = setTaskFromReuseOrCreateNewTask(
                     taskToAffiliate, preferredLaunchStackId, topStack);
         } else if (mSourceRecord != null) {
@@ -1245,6 +1258,7 @@ class ActivityStarter {
                 if (mTargetStack.isFocusable() && !mSupervisor.isFocusedStack(mTargetStack)) {
                     mTargetStack.moveToFront("startActivityUnchecked");
                 }
+				// 3. ActivityStackSupervisor.resumeFocusedStackTopActivityLocked
                 mSupervisor.resumeFocusedStackTopActivityLocked(mTargetStack, mStartActivity,
                         mOptions);
             }

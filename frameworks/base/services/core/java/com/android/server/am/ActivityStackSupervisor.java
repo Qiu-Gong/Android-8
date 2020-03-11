@@ -1553,11 +1553,12 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
     void startSpecificActivityLocked(ActivityRecord r,
             boolean andResume, boolean checkConfig) {
         // Is this activity's application already running?
+        // 1. 获取即将启动的        Activity 的所在的应用程序进程
         ProcessRecord app = mService.getProcessRecordLocked(r.processName,
                 r.info.applicationInfo.uid, true);
 
         r.getStack().setLaunchTime(r);
-
+		// 2. 判断要启动的 Activity 所在的应用程序进程如果已经运行的话
         if (app != null && app.thread != null) {
             try {
                 if ((r.info.flags&ActivityInfo.FLAG_MULTIPROCESS) == 0
@@ -1569,6 +1570,7 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
                     app.addPackage(r.info.packageName, r.info.applicationInfo.versionCode,
                             mService.mProcessStats);
                 }
+				// 3. app: 代表要启动的 Activity 所在的应用程序进程的 ProcessRecord
                 realStartActivityLocked(r, app, andResume, checkConfig);
                 return;
             } catch (RemoteException e) {
@@ -2064,7 +2066,10 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
 			// ActivityStack.resumeTopActivityUncheckedLocked
             return targetStack.resumeTopActivityUncheckedLocked(target, targetOptions);
         }
+
+		// 1. 获取要启动的 Activity 所在栈的栈顶的不是处于停止状态的 ActivityRecord
         final ActivityRecord r = mFocusedStack.topRunningActivityLocked();
+		// 2. 如果 ActivityRecord 不为 null，或者要启动的 Activity 的状态不是 RESUMED 状态
         if (r == null || r.state != RESUMED) {
             mFocusedStack.resumeTopActivityUncheckedLocked(null, null);
         } else if (r.state == RESUMED) {
