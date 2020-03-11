@@ -28,13 +28,13 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.IPackageManager;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.dex.ArtManager;
 import android.content.pm.split.SplitDependencyLoader;
 import android.content.res.AssetManager;
 import android.content.res.CompatibilityInfo;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.FileUtils;
 import android.os.Handler;
 import android.os.IBinder;
@@ -64,7 +64,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -91,7 +90,6 @@ final class ServiceConnectionLeaked extends AndroidRuntimeException {
 public final class LoadedApk {
     static final String TAG = "LoadedApk";
     static final boolean DEBUG = false;
-    private static final String PROPERTY_NAME_APPEND_NATIVE = "pi.append_native_lib_paths";
 
     private final ActivityThread mActivityThread;
     final String mPackageName;
@@ -99,6 +97,7 @@ public final class LoadedApk {
     private String mAppDir;
     private String mResDir;
     private String[] mOverlayDirs;
+    private String[] mSharedLibraries;
     private String mDataDir;
     private String mLibDir;
     private File mDataDirFile;
@@ -117,7 +116,6 @@ public final class LoadedApk {
     private String[] mSplitNames;
     private String[] mSplitAppDirs;
     private String[] mSplitResDirs;
-    private String[] mSplitClassLoaderNames;
 
     private final ArrayMap<Context, ArrayMap<BroadcastReceiver, ReceiverDispatcher>> mReceivers
         = new ArrayMap<>();
@@ -127,7 +125,8 @@ public final class LoadedApk {
         = new ArrayMap<>();
     private final ArrayMap<Context, ArrayMap<ServiceConnection, LoadedApk.ServiceDispatcher>> mUnboundServices
         = new ArrayMap<>();
-    private AppComponentFactory mAppComponentFactory;
+
+    int mClientCount = 0;
 
     Application getApplication() {
         return mApplication;
@@ -151,7 +150,6 @@ public final class LoadedApk {
         mIncludeCode = includeCode;
         mRegisterPackage = registerPackage;
         mDisplayAdjustments.setCompatibilityInfo(compatInfo);
-        mAppComponentFactory = createAppFactory(mApplicationInfo, mBaseClassLoader);
     }
 
     private static ApplicationInfo adjustNativeLibraryPaths(ApplicationInfo info) {
@@ -194,8 +192,8 @@ public final class LoadedApk {
         mResDir = null;
         mSplitAppDirs = null;
         mSplitResDirs = null;
-        mSplitClassLoaderNames = null;
         mOverlayDirs = null;
+        mSharedLibraries = null;
         mDataDir = null;
         mDataDirFile = null;
         mDeviceProtectedDataDirFile = null;
@@ -207,7 +205,6 @@ public final class LoadedApk {
         mRegisterPackage = false;
         mClassLoader = ClassLoader.getSystemClassLoader();
         mResources = Resources.getSystem();
-        mAppComponentFactory = createAppFactory(mApplicationInfo, mClassLoader);
     }
 
     /**
@@ -217,23 +214,6 @@ public final class LoadedApk {
         assert info.packageName.equals("android");
         mApplicationInfo = info;
         mClassLoader = classLoader;
-        mAppComponentFactory = createAppFactory(info, classLoader);
-    }
-
-    private AppComponentFactory createAppFactory(ApplicationInfo appInfo, ClassLoader cl) {
-        if (appInfo.appComponentFactory != null && cl != null) {
-            try {
-                return (AppComponentFactory) cl.loadClass(appInfo.appComponentFactory)
-                        .newInstance();
-            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                Slog.e(TAG, "Unable to instantiate appComponentFactory", e);
-            }
-        }
-        return AppComponentFactory.DEFAULT;
-    }
-
-    public AppComponentFactory getAppFactory() {
-        return mAppComponentFactory;
     }
 
     public String getPackageName() {
@@ -335,7 +315,6 @@ public final class LoadedApk {
                         getClassLoader());
             }
         }
-        mAppComponentFactory = createAppFactory(aInfo, mClassLoader);
     }
 
     private void setApplicationInfo(ApplicationInfo aInfo) {
@@ -345,6 +324,7 @@ public final class LoadedApk {
         mAppDir = aInfo.sourceDir;
         mResDir = aInfo.uid == myUid ? aInfo.sourceDir : aInfo.publicSourceDir;
         mOverlayDirs = aInfo.resourceDirs;
+        mSharedLibraries = aInfo.sharedLibraryFiles;
         mDataDir = aInfo.dataDir;
         mLibDir = aInfo.nativeLibraryDir;
         mDataDirFile = FileUtils.newFileOrNull(aInfo.dataDir);
@@ -354,7 +334,6 @@ public final class LoadedApk {
         mSplitNames = aInfo.splitNames;
         mSplitAppDirs = aInfo.splitSourceDirs;
         mSplitResDirs = aInfo.uid == myUid ? aInfo.splitSourceDirs : aInfo.splitPublicSourceDirs;
-        mSplitClassLoaderNames = aInfo.splitClassLoaderNames;
 
         if (aInfo.requestsIsolatedSplitLoading() && !ArrayUtils.isEmpty(mSplitNames)) {
             mSplitLoader = new SplitDependencyLoaderImpl(aInfo.splitDependencies);
@@ -469,13 +448,10 @@ public final class LoadedApk {
             }
         }
 
-        // Prepend the shared libraries, maintaining their original order where possible.
         if (sharedLibraries != null) {
-            int index = 0;
             for (String lib : sharedLibraries) {
                 if (!outZipPaths.contains(lib)) {
-                    outZipPaths.add(index, lib);
-                    index++;
+                    outZipPaths.add(0, lib);
                     appendApkLibPathIfNeeded(lib, aInfo, outLibPaths);
                 }
             }
@@ -551,8 +527,7 @@ public final class LoadedApk {
             // Since we handled the special base case above, parentSplitIdx is always valid.
             final ClassLoader parent = mCachedClassLoaders[parentSplitIdx];
             mCachedClassLoaders[splitIdx] = ApplicationLoaders.getDefault().getClassLoader(
-                    mSplitAppDirs[splitIdx - 1], getTargetSdkVersion(), false, null, null, parent,
-                    mSplitClassLoaderNames[splitIdx - 1]);
+                    mSplitAppDirs[splitIdx - 1], getTargetSdkVersion(), false, null, null, parent);
 
             Collections.addAll(splitPaths, mCachedResourcePaths[parentSplitIdx]);
             splitPaths.add(mSplitResDirs[splitIdx - 1]);
@@ -615,7 +590,6 @@ public final class LoadedApk {
             } else {
                 mClassLoader = ClassLoader.getSystemClassLoader();
             }
-            mAppComponentFactory = createAppFactory(mApplicationInfo, mClassLoader);
 
             return;
         }
@@ -649,40 +623,17 @@ public final class LoadedApk {
         final List<String> zipPaths = new ArrayList<>(10);
         final List<String> libPaths = new ArrayList<>(10);
 
-        boolean isBundledApp = mApplicationInfo.isSystemApp()
+        final boolean isBundledApp = mApplicationInfo.isSystemApp()
                 && !mApplicationInfo.isUpdatedSystemApp();
-
-        // Vendor apks are treated as bundled only when /vendor/lib is in the default search
-        // paths. If not, they are treated as unbundled; access to system libs is limited.
-        // Having /vendor/lib in the default search paths means that all system processes
-        // are allowed to use any vendor library, which in turn means that system is dependent
-        // on vendor partition. In the contrary, not having /vendor/lib in the default search
-        // paths mean that the two partitions are separated and thus we can treat vendor apks
-        // as unbundled.
-        final String defaultSearchPaths = System.getProperty("java.library.path");
-        final boolean treatVendorApkAsUnbundled = !defaultSearchPaths.contains("/vendor/lib");
-        if (mApplicationInfo.getCodePath() != null
-                && mApplicationInfo.isVendor() && treatVendorApkAsUnbundled) {
-            isBundledApp = false;
-        }
 
         makePaths(mActivityThread, isBundledApp, mApplicationInfo, zipPaths, libPaths);
 
         String libraryPermittedPath = mDataDir;
-
         if (isBundledApp) {
-            // For bundled apps, add the base directory of the app (e.g.,
-            // /system/app/Foo/) to the permitted paths so that it can load libraries
-            // embedded in module apks under the directory. For now, GmsCore is relying
-            // on this, but this isn't specific to the app. Also note that, we don't
-            // need to do this for unbundled apps as entire /data is already set to
-            // the permitted paths for them.
-            libraryPermittedPath += File.pathSeparator
-                    + Paths.get(getAppDir()).getParent().toString();
-
             // This is necessary to grant bundled apps access to
             // libraries located in subdirectories of /system/lib
-            libraryPermittedPath += File.pathSeparator + defaultSearchPaths;
+            libraryPermittedPath += File.pathSeparator +
+                                    System.getProperty("java.library.path");
         }
 
         final String librarySearchPath = TextUtils.join(File.pathSeparator, libPaths);
@@ -696,11 +647,9 @@ public final class LoadedApk {
             if (mClassLoader == null) {
                 StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskReads();
                 mClassLoader = ApplicationLoaders.getDefault().getClassLoader(
-                        "" /* codePath */, mApplicationInfo.targetSdkVersion, isBundledApp,
-                        librarySearchPath, libraryPermittedPath, mBaseClassLoader,
-                        null /* classLoaderName */);
+                    "" /* codePath */, mApplicationInfo.targetSdkVersion, isBundledApp,
+                    librarySearchPath, libraryPermittedPath, mBaseClassLoader);
                 StrictMode.setThreadPolicy(oldPolicy);
-                mAppComponentFactory = AppComponentFactory.DEFAULT;
             }
 
             return;
@@ -726,61 +675,11 @@ public final class LoadedApk {
 
             mClassLoader = ApplicationLoaders.getDefault().getClassLoader(zip,
                     mApplicationInfo.targetSdkVersion, isBundledApp, librarySearchPath,
-                    libraryPermittedPath, mBaseClassLoader,
-                    mApplicationInfo.classLoaderName);
-            mAppComponentFactory = createAppFactory(mApplicationInfo, mClassLoader);
+                    libraryPermittedPath, mBaseClassLoader);
 
             StrictMode.setThreadPolicy(oldPolicy);
             // Setup the class loader paths for profiling.
             needToSetupJitProfiles = true;
-        }
-
-        if (!libPaths.isEmpty() && SystemProperties.getBoolean(PROPERTY_NAME_APPEND_NATIVE, true)) {
-            // Temporarily disable logging of disk reads on the Looper thread as this is necessary
-            StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskReads();
-            try {
-                ApplicationLoaders.getDefault().addNative(mClassLoader, libPaths);
-            } finally {
-                StrictMode.setThreadPolicy(oldPolicy);
-            }
-        }
-
-        // /vendor/lib, /odm/lib and /product/lib are added to the native lib search
-        // paths of the classloader. Note that this is done AFTER the classloader is
-        // created by ApplicationLoaders.getDefault().getClassLoader(...). The
-        // reason is because if we have added the paths when creating the classloader
-        // above, the paths are also added to the search path of the linker namespace
-        // 'classloader-namespace', which will allow ALL libs in the paths to apps.
-        // Since only the libs listed in <partition>/etc/public.libraries.txt can be
-        // available to apps, we shouldn't add the paths then.
-        //
-        // However, we need to add the paths to the classloader (Java) though. This
-        // is because when a native lib is requested via System.loadLibrary(), the
-        // classloader first tries to find the requested lib in its own native libs
-        // search paths. If a lib is not found in one of the paths, dlopen() is not
-        // called at all. This can cause a problem that a vendor public native lib
-        // is accessible when directly opened via dlopen(), but inaccesible via
-        // System.loadLibrary(). In order to prevent the problem, we explicitly
-        // add the paths only to the classloader, and not to the native loader
-        // (linker namespace).
-        List<String> extraLibPaths = new ArrayList<>(3);
-        String abiSuffix = VMRuntime.getRuntime().is64Bit() ? "64" : "";
-        if (!defaultSearchPaths.contains("/vendor/lib")) {
-            extraLibPaths.add("/vendor/lib" + abiSuffix);
-        }
-        if (!defaultSearchPaths.contains("/odm/lib")) {
-            extraLibPaths.add("/odm/lib" + abiSuffix);
-        }
-        if (!defaultSearchPaths.contains("/product/lib")) {
-            extraLibPaths.add("/product/lib" + abiSuffix);
-        }
-        if (!extraLibPaths.isEmpty()) {
-            StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskReads();
-            try {
-                ApplicationLoaders.getDefault().addNative(mClassLoader, extraLibPaths);
-            } finally {
-                StrictMode.setThreadPolicy(oldPolicy);
-            }
         }
 
         if (addedPaths != null && addedPaths.size() > 0) {
@@ -813,6 +712,13 @@ public final class LoadedApk {
         }
     }
 
+    // Keep in sync with installd (frameworks/native/cmds/installd/commands.cpp).
+    private static File getPrimaryProfileFile(String packageName) {
+        File profileDir = Environment.getDataProfilesDePackageDirectory(
+                UserHandle.myUserId(), packageName);
+        return new File(profileDir, "primary.prof");
+    }
+
     private void setupJitProfileSupport() {
         if (!SystemProperties.getBoolean("dalvik.vm.usejitprofiles", false)) {
             return;
@@ -840,12 +746,10 @@ public final class LoadedApk {
             return;
         }
 
-        for (int i = codePaths.size() - 1; i >= 0; i--) {
-            String splitName = i == 0 ? null : mApplicationInfo.splitNames[i - 1];
-            String profileFile = ArtManager.getCurrentProfilePath(
-                    mPackageName, UserHandle.myUserId(), splitName);
-            VMRuntime.registerAppInfo(profileFile, new String[] {codePaths.get(i)});
-        }
+        final File profileFile = getPrimaryProfileFile(mPackageName);
+
+        VMRuntime.registerAppInfo(profileFile.getPath(),
+                codePaths.toArray(new String[codePaths.size()]));
 
         // Register the app data directory with the reporter. It will
         // help deciding whether or not a dex file is the primary apk or a
@@ -1725,12 +1629,9 @@ public final class LoadedApk {
             if (dead) {
                 mConnection.onBindingDied(name);
             }
-            // If there is a new viable service, it is now connected.
+            // If there is a new service, it is now connected.
             if (service != null) {
                 mConnection.onServiceConnected(name, service);
-            } else {
-                // The binding machinery worked, but the remote returned null from onBind().
-                mConnection.onNullBinding(name);
             }
         }
 
