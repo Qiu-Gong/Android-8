@@ -240,6 +240,7 @@ class ContextImpl extends Context {
 
     @Override
     public ContentResolver getContentResolver() {
+    	// 1. ApplicationContentResolver 
         return mContentResolver;
     }
 
@@ -2503,7 +2504,8 @@ class ContextImpl extends Context {
 
         @Override
         protected IContentProvider acquireUnstableProvider(Context c, String auth) {
-            return mMainThread.acquireProvider(c,
+			// ActivityThread.acquireProvider
+			return mMainThread.acquireProvider(c,
                     ContentProvider.getAuthorityWithoutUserId(auth),
                     resolveUserIdFromAuthority(auth), false);
         }

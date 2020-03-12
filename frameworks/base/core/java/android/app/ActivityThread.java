@@ -5697,7 +5697,7 @@ public final class ActivityThread {
         } else {
             ii = null;
         }
-
+		// 1. 创建了 Contextlmpl
         final ContextImpl appContext = ContextImpl.createAppContext(this, data.info);
         updateLocaleListFromAppContext(appContext,
                 mResourcesManager.getConfiguration().getLocales());
@@ -5751,8 +5751,9 @@ public final class ActivityThread {
                     appContext.getClassLoader(), false, true, false);
             final ContextImpl instrContext = ContextImpl.createAppContext(this, pi);
 
-            try {
-                final ClassLoader cl = instrContext.getClassLoader();
+            try {                
+				// 2. 反射创建 Instrumentation 
+				final ClassLoader cl = instrContext.getClassLoader();
                 mInstrumentation = (Instrumentation)
                     cl.loadClass(data.instrumentationName.getClassName()).newInstance();
             } catch (Exception e) {
@@ -5762,6 +5763,7 @@ public final class ActivityThread {
             }
 
             final ComponentName component = new ComponentName(ii.packageName, ii.name);
+			// 3. 初始化 Instrumentation
             mInstrumentation.init(this, instrContext, appContext, component,
                     data.instrumentationWatcher, data.instrumentationUiAutomationConnection);
 
@@ -5791,6 +5793,7 @@ public final class ActivityThread {
         try {
             // If the app is being launched for full backup or restore, bring it up in
             // a restricted environment with the base application class.
+            // 4. 创建 Application
             Application app = data.info.makeApplication(data.restrictedBackupMode, null);
             mInitialApplication = app;
 
@@ -5798,6 +5801,7 @@ public final class ActivityThread {
             // app's custom Application class
             if (!data.restrictedBackupMode) {
                 if (!ArrayUtils.isEmpty(data.providers)) {
+					// 5. 启动 ContentProvider 
                     installContentProviders(app, data.providers);
                     // For process that contains content providers, we want to
                     // ensure that the JIT is enabled "at some point".
@@ -5817,6 +5821,7 @@ public final class ActivityThread {
             }
 
             try {
+				// 6. 调用 Application 的 onCreate 方法
                 mInstrumentation.callApplicationOnCreate(app);
             } catch (Exception e) {
                 if (!mInstrumentation.onException(app, e)) {
@@ -5867,7 +5872,7 @@ public final class ActivityThread {
     private void installContentProviders(
             Context context, List<ProviderInfo> providers) {
         final ArrayList<ContentProviderHolder> results = new ArrayList<>();
-
+		// 1. 遍历当前应用程序进程的 Providerlnfo 列表，得到每个 ContentProvider 的 Providerlnfo
         for (ProviderInfo cpi : providers) {
             if (DEBUG_PROVIDER) {
                 StringBuilder buf = new StringBuilder(128);
@@ -5877,6 +5882,7 @@ public final class ActivityThread {
                 buf.append(cpi.name);
                 Log.i(TAG, buf.toString());
             }
+			// 2. 启动 ContentProvider
             ContentProviderHolder cph = installProvider(context, null, cpi,
                     false /*noisy*/, true /*noReleaseNeeded*/, true /*stable*/);
             if (cph != null) {
@@ -5886,6 +5892,7 @@ public final class ActivityThread {
         }
 
         try {
+			// 3.
             ActivityManager.getService().publishContentProviders(
                 getApplicationThread(), results);
         } catch (RemoteException ex) {
@@ -5895,6 +5902,8 @@ public final class ActivityThread {
 
     public final IContentProvider acquireProvider(
             Context c, String auth, int userId, boolean stable) {
+        // 1.acquireExistingProvider 方法内部会检查 ActivityThread 的全局变量
+		//   mProviderMap 中是否有目标 ContentProvider 存在，有则返回
         final IContentProvider provider = acquireExistingProvider(c, auth, userId, stable);
         if (provider != null) {
             return provider;
@@ -5908,6 +5917,7 @@ public final class ActivityThread {
         // be re-entrant in the case where the provider is in the same process.
         ContentProviderHolder holder = null;
         try {
+			// 2. 不存在 AMS.getContentProvider 
             holder = ActivityManager.getService().getContentProvider(
                     getApplicationThread(), auth, userId, stable);
         } catch (RemoteException ex) {
@@ -5920,6 +5930,7 @@ public final class ActivityThread {
 
         // Install provider will increment the reference count for us, and break
         // any ties in the race.
+        // 3. installProvider 方法用来安装 ContentProvider 
         holder = installProvider(c, holder, holder.info,
                 true /*noisy*/, holder.noReleaseNeeded, stable);
         return holder.provider;
@@ -6298,6 +6309,7 @@ public final class ActivityThread {
             }
 
             try {
+				// 1. 通过反射来创建 ContentProvider 类型的 localProvider 对象
                 final java.lang.ClassLoader cl = c.getClassLoader();
                 localProvider = (ContentProvider)cl.
                     loadClass(info.name).newInstance();
@@ -6311,6 +6323,7 @@ public final class ActivityThread {
                 if (DEBUG_PROVIDER) Slog.v(
                     TAG, "Instantiating local provider " + info.name);
                 // XXX Need to create the correct context for this provider.
+                // 2. 调用 onCreate
                 localProvider.attachInfo(c, info);
             } catch (java.lang.Exception e) {
                 if (!mInstrumentation.onException(null, e)) {

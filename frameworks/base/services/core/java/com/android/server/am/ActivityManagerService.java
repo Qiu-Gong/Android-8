@@ -6922,6 +6922,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             checkTime(startTime, "attachApplicationLocked: immediately before bindApplication");
             mStackSupervisor.mActivityMetricsLogger.notifyBindApplication(app);
             if (app.instr != null) {
+				// ActivityThread.ApplicationThread.bindApplication
                 thread.bindApplication(processName, appInfo, providers,
                         app.instr.mClass,
                         profilerInfo, app.instr.mArguments,
@@ -11562,7 +11563,8 @@ public class ActivityManagerService extends IActivityManager.Stub
 
                         // Use existing process if already started
                         checkTime(startTime, "getContentProviderImpl: looking for process record");
-                        ProcessRecord proc = getProcessRecordLocked(
+						// 1. 获取目标 ContentProvider 的应用程序进程信息
+						ProcessRecord proc = getProcessRecordLocked(
                                 cpi.processName, cpr.appInfo.uid, false);
                         if (proc != null && proc.thread != null && !proc.killed) {
                             if (DEBUG_PROVIDER) Slog.d(TAG_PROVIDER,
@@ -11571,12 +11573,14 @@ public class ActivityManagerService extends IActivityManager.Stub
                                 checkTime(startTime, "getContentProviderImpl: scheduling install");
                                 proc.pubProviders.put(cpi.name, cpr);
                                 try {
+									// 2.
                                     proc.thread.scheduleInstallProvider(cpi);
                                 } catch (RemoteException e) {
                                 }
                             }
                         } else {
                             checkTime(startTime, "getContentProviderImpl: before start process");
+							// 3. 如果没有启动进程，则启动
                             proc = startProcessLocked(cpi.processName,
                                     cpr.appInfo, false, 0, "content provider",
                                     new ComponentName(cpi.applicationInfo.packageName,
@@ -11822,6 +11826,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 if (DEBUG_MU) Slog.v(TAG_MU, "ContentProviderRecord uid = " + dst.uid);
                 if (dst != null) {
                     ComponentName comp = new ComponentName(dst.info.packageName, dst.info.name);
+					// 1. 存储在 mProviderMap 中
                     mProviderMap.putProviderByClass(comp, dst);
                     String names[] = dst.info.authority.split(";");
                     for (int j = 0; j < names.length; j++) {
