@@ -483,11 +483,14 @@ public final class BroadcastQueue {
             Intent intent, int resultCode, String data, Bundle extras,
             boolean ordered, boolean sticky, int sendingUser) throws RemoteException {
         // Send the intent to the receiver asynchronously using one-way binder calls.
-        if (app != null) {
+		// 1. 应用程序进程存在
+		if (app != null) {
+			// 2. 并且正在运行
             if (app.thread != null) {
                 // If we have an app thread, do the call through that so it is
                 // correctly ordered with other one-way calls.
                 try {
+					// 3. ActivityThread.ApplicationThread.scheduleRegisteredReceiver
                     app.thread.scheduleRegisteredReceiver(receiver, intent, resultCode,
                             data, extras, ordered, sticky, sendingUser, app.repProcState);
                 // TODO: Uncomment this when (b/28322359) is fixed and we aren't getting
@@ -700,6 +703,8 @@ public final class BroadcastQueue {
                     skipReceiverLocked(r);
                 }
             } else {
+            	// 用来检查广播发送者和广播接收者的权限的
+            	// 1. 上述权限检查完成后，调用 performReceiveLocked
                 performReceiveLocked(filter.receiverList.app, filter.receiverList.receiver,
                         new Intent(r.intent), r.resultCode, r.resultData,
                         r.resultExtras, r.ordered, r.initialSticky, r.userId);
@@ -829,11 +834,17 @@ public final class BroadcastQueue {
             mService.updateCpuStats();
 
             if (fromMsg) {
+				// 1. 已经处理了 BROADCAST_INTENT_MSG 类型的消息
+				// 将 mBroadcastsScheduled 设置为 flase, 表示对于此前发来的 BROADCAST_INTENT_MSG
+				// 类型的消息已经处理了
                 mBroadcastsScheduled = false;
             }
 
             // First, deliver any non-serialized broadcasts right away.
+            // 2. 遍历存储无序广播的 mParallelBroadcasts 列表
+            // 将 mParallelBroadcasts 列表中的无序广播发送给对应的广播接收者
             while (mParallelBroadcasts.size() > 0) {
+				// 3. 获取无序广播
                 r = mParallelBroadcasts.remove(0);
                 r.dispatchTime = SystemClock.uptimeMillis();
                 r.dispatchClockTime = System.currentTimeMillis();
@@ -855,6 +866,7 @@ public final class BroadcastQueue {
                     if (DEBUG_BROADCAST)  Slog.v(TAG_BROADCAST,
                             "Delivering non-ordered on [" + mQueueName + "] to registered "
                             + target + ": " + r);
+					// 4. 将这些 r 对象描述的广播发送给对应的广播接收者，
                     deliverToRegisteredReceiverLocked(r, (BroadcastFilter)target, false, i);
                 }
                 addBroadcastToHistoryLocked(r);

@@ -1396,12 +1396,15 @@ class ContextImpl extends Context {
     private Intent registerReceiverInternal(BroadcastReceiver receiver, int userId,
             IntentFilter filter, String broadcastPermission,
             Handler scheduler, Context context, int flags) {
+        // 跨进程通信接口
         IIntentReceiver rd = null;
         if (receiver != null) {
+			// 1. 
             if (mPackageInfo != null && context != null) {
                 if (scheduler == null) {
                     scheduler = mMainThread.getHandler();
                 }
+				// 2. 通过 mPackageInfo 的 getReceiverDispatcher 方法获取 rd 对象
                 rd = mPackageInfo.getReceiverDispatcher(
                     receiver, context, scheduler,
                     mMainThread.getInstrumentation(), true);
@@ -1409,11 +1412,13 @@ class ContextImpl extends Context {
                 if (scheduler == null) {
                     scheduler = mMainThread.getHandler();
                 }
+				// 3. 创建 rd 对象
                 rd = new LoadedApk.ReceiverDispatcher(
                         receiver, context, scheduler, null, true).getIIntentReceiver();
             }
         }
         try {
+			// 4. AMS.registerReceiver
             final Intent intent = ActivityManager.getService().registerReceiver(
                     mMainThread.getApplicationThread(), mBasePackageName, rd, filter,
                     broadcastPermission, userId, flags);

@@ -382,7 +382,8 @@ final class ServiceRecord extends Binder {
         if (a != null) {
             return a;
         }
-		// 3. 
+		// 3. 创建 AppBindRecord，并将 ProcessRecord 作为 key, 
+		// AppBindRecord 作为 value 保存在 IntentBindRecord 的 apps ( i.apps ）中
         a = new AppBindRecord(this, i, app);
         i.apps.put(app, a);
         return a;

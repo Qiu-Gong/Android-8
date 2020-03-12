@@ -1292,6 +1292,7 @@ public final class LoadedApk {
                         intent.prepareToEnterProcess();
                         setExtrasClassLoader(cl);
                         receiver.setPendingResult(this);
+						//  执行 BroadcastReceiver 类型的 receiver 对象的 onReceive 方法
                         receiver.onReceive(mContext, intent);
                     } catch (Exception e) {
                         if (mRegistered && ordered) {
@@ -1370,7 +1371,8 @@ public final class LoadedApk {
 
         public void performReceive(Intent intent, int resultCode, String data,
                 Bundle extras, boolean ordered, boolean sticky, int sendingUser) {
-            final Args args = new Args(intent, resultCode, data, extras, ordered,
+			// 1. 将广播的 intent 等信息封装为 Args 对象
+			final Args args = new Args(intent, resultCode, data, extras, ordered,
                     sticky, sendingUser);
             if (intent == null) {
                 Log.wtf(TAG, "Null intent received");
@@ -1381,6 +1383,7 @@ public final class LoadedApk {
                             + " seq=" + seq + " to " + mReceiver);
                 }
             }
+			// 2. 调用 mActivityThread 的 post 方法并传入了 Args 对象
             if (intent == null || !mActivityThread.post(args.getRunnable())) {
                 if (mRegistered && ordered) {
                     IActivityManager mgr = ActivityManager.getService();

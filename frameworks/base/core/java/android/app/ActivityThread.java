@@ -993,6 +993,7 @@ public final class ActivityThread {
                 int resultCode, String dataStr, Bundle extras, boolean ordered,
                 boolean sticky, int sendingUser, int processState) throws RemoteException {
             updateProcessState(processState, false);
+			// LoadedApk.ReceiverDispatcher.InnerReceiver.performReceive
             receiver.performReceive(intent, resultCode, dataStr, extras, ordered,
                     sticky, sendingUser);
         }

@@ -29,10 +29,14 @@ import java.io.PrintWriter;
  */
 final class IntentBindRecord {
     /** The running service. */
+	// 被绑定的 Service 
     final ServiceRecord service;
     /** The intent that is bound.*/
+	// 绑定 Service 的 Intent
     final Intent.FilterComparison intent; // 
     /** All apps that have bound to this Intent. */
+	// 所有用当前 Intent 绑定 Service 的应用程序进程
+	// 不同的应用程序进程可能使用同一个 Intent 来绑定 Service
     final ArrayMap<ProcessRecord, AppBindRecord> apps
             = new ArrayMap<ProcessRecord, AppBindRecord>();
     /** Binder published from service. */
