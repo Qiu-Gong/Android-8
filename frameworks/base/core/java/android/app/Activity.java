@@ -6909,12 +6909,16 @@ public class Activity extends ContextThemeWrapper
             NonConfigurationInstances lastNonConfigurationInstances,
             Configuration config, String referrer, IVoiceInteractor voiceInteractor,
             Window window, ActivityConfigCallback activityConfigCallback) {
-        attachBaseContext(context);
+		// ContextImpl 赋值到 ContextWrapper.mBase
+		attachBaseContext(context);
 
         mFragments.attachHost(null /*parent*/);
-
-        mWindow = new PhoneWindow(this, window, activityConfigCallback);
+		// 2. 创建 PhoneWindow，它代表应用程序窗口。
+		// PhoneWindow 在运行中会间接触发很多事件，比如点击、菜单弹出、屏幕焦点变化等事件
+		// 事件需要转发给与 PhoneWindow 关联的 Activity
+		mWindow = new PhoneWindow(this, window, activityConfigCallback);
         mWindow.setWindowControllerCallback(this);
+		// 3. 转发操作通过 Window.Callback 接口实现，Actvity 实现了接口
         mWindow.setCallback(this);
         mWindow.setOnWindowDismissedCallback(this);
         mWindow.getLayoutInflater().setPrivateFactory(this);
@@ -6947,7 +6951,7 @@ public class Activity extends ContextThemeWrapper
                         Looper.myLooper());
             }
         }
-
+		// 4. 为 PhoneWindow 设置 WindowManager
         mWindow.setWindowManager(
                 (WindowManager)context.getSystemService(Context.WINDOW_SERVICE),
                 mToken, mComponent.flattenToString(),
@@ -6955,6 +6959,7 @@ public class Activity extends ContextThemeWrapper
         if (mParent != null) {
             mWindow.setContainer(mParent.getWindow());
         }
+		// 5. 获取 WindowManager 并赋值给 Activity 的成员变量 mWindowManager
         mWindowManager = mWindow.getWindowManager();
         mCurrentConfig = config;
 

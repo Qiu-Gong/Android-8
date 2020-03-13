@@ -756,7 +756,7 @@ public final class ActivityThread {
                 boolean notResumed, boolean isForward, ProfilerInfo profilerInfo) {
 
             updateProcessState(procState, false);
-
+			// 1. 将启动 Activity 的参数封装成 ActivityClientRecord
             ActivityClientRecord r = new ActivityClientRecord();
 
             r.token = token;
@@ -2758,6 +2758,8 @@ public final class ActivityThread {
                     r.mPendingRemoveWindow = null;
                     r.mPendingRemoveWindowManager = null;
                 }
+				// 将此前创建的 Activity 实例赋值给 ContextImpl 的成员变量 mOuterContext，
+				// 这样 Contextlmpl 也可以访问 Activity 的变量和方拉。
                 appContext.setOuterContext(activity);
 				// 7. 初始化 Activity，在 attach 方法中会创建 Window 对象 （ PhoneWindow ）并与 Activity 自身进行关联
                 activity.attach(appContext, this, getInstrumentation(), r.token,

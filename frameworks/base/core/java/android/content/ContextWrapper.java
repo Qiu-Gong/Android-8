@@ -69,6 +69,7 @@ public class ContextWrapper extends Context {
         if (mBase != null) {
             throw new IllegalStateException("Base context already set");
         }
+		// mBase = ContextImpl类型
         mBase = base;
     }
 

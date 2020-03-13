@@ -2383,6 +2383,7 @@ class ContextImpl extends Context {
     }
 
     final void setOuterContext(Context context) {
+    	// 可能是 Activity，Service，Application
         mOuterContext = context;
     }
 

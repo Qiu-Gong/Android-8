@@ -940,6 +940,7 @@ public final class LoadedApk {
 
     public Application makeApplication(boolean forceDefaultAppClass,
             Instrumentation instrumentation) {
+        // 1. 已创建则返回
         if (mApplication != null) {
             return mApplication;
         }
@@ -961,10 +962,13 @@ public final class LoadedApk {
                 initializeJavaContextClassLoader();
                 Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
             }
+			// 2. 创建 appContext
             ContextImpl appContext = ContextImpl.createAppContext(mActivityThread, this);
-            app = mActivityThread.mInstrumentation.newApplication(
+			// 3. 创建 Application，把 ContextImpl 赋值到 Application
+			app = mActivityThread.mInstrumentation.newApplication(
                     cl, appClass, appContext);
-            appContext.setOuterContext(app);
+			// 4. 把 Application  也赋值到 ContextImpl
+			appContext.setOuterContext(app);
         } catch (Exception e) {
             if (!mActivityThread.mInstrumentation.onException(app, e)) {
                 Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
@@ -974,6 +978,7 @@ public final class LoadedApk {
             }
         }
         mActivityThread.mAllApplications.add(app);
+		// 5. 将 Application 赋值给 LoadedApk 的成员变量 mApplication 
         mApplication = app;
 
         if (instrumentation != null) {
