@@ -2670,15 +2670,18 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         public Lifecycle(Context context) {
             super(context);
+			// 1. 创建的是 ActivityManagerService
             mService = new ActivityManagerService(context);
         }
 
         @Override
         public void onStart() {
+        	// 2. 调用 ActivityManagerService.start
             mService.start();
         }
 
         public ActivityManagerService getService() {
+        	// 3. 返回 
             return mService;
         }
     }

@@ -1034,14 +1034,17 @@ class ActivityStarter {
             IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
             int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask,
             ActivityRecord[] outActivity) {
-
+		// 1. 初始化启动 Activity 的各种配置，在初始化前会重置各种配置再进行配置 
+		// 配置包括 ActivityRecord 、 Intent 、 TaskRecord 和 LaunchFlags
         setInitialState(r, options, inTask, doResume, startFlags, sourceRecord, voiceSession,
                 voiceInteractor);
 
+		// 2. 计算出 Activity 启动的 FLAG, 并将计算的值赋值给 mLaunchFlags 		
         computeLaunchingTaskFlags();
 
         computeSourceStack();
 
+		// 3. 将 mLaunchFlags 设置给 Intent
         mIntent.setFlags(mLaunchFlags);
 
         ActivityRecord reusedActivity = getReusableIntentActivity();
@@ -1454,20 +1457,29 @@ class ActivityStarter {
             }
         }
 
+		// 1.  TaskRecord 类型的 mlnTask 为 null 时 ，说明 Activity 要加入的栈不存在
+		// 解决的问题就是 Activity 要加入的栈不存在时如何计算出启动的 FLAG
         if (mInTask == null) {
+			// 2. 初始 Activity (比如 ActivityA 启动了 ActivityB, ActivityA 就是初始 Activity)
             if (mSourceRecord == null) {
                 // This activity is not being started from another...  in this
                 // case we -always- start a new task.
+                // 3. 没有栈并且没有初始Activity，则创建一个新栈
                 if ((mLaunchFlags & FLAG_ACTIVITY_NEW_TASK) == 0 && mInTask == null) {
                     Slog.w(TAG, "startActivity called from non-Activity context; forcing " +
                             "Intent.FLAG_ACTIVITY_NEW_TASK for: " + mIntent);
+					// 创建新栈
                     mLaunchFlags |= FLAG_ACTIVITY_NEW_TASK;
                 }
+				// 4. 如果 “初始Activity” 所在的栈只允许有一个Activity实例，
+				// 则也需要创建一个新栈
             } else if (mSourceRecord.launchMode == LAUNCH_SINGLE_INSTANCE) {
                 // The original activity who is starting us is running as a single
                 // instance...  this new activity it is starting must go on its
                 // own task.
+                // 创建新栈
                 mLaunchFlags |= FLAG_ACTIVITY_NEW_TASK;
+				// 5. 如果 Launch Mode 设置了 singleTask 或 singleInstance，则也要创建一个新栈
             } else if (mLaunchSingleInstance || mLaunchSingleTask) {
                 // The activity being started is a single instance...  it always
                 // gets launched into its own task.

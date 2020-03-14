@@ -516,6 +516,7 @@ public final class SystemServer {
         traceEnd();
 
         // Activity manager runs the show.
+        // 1. 启动 ActivityManagerService
         traceBeginAndSlog("StartActivityManager");
         mActivityManagerService = mSystemServiceManager.startService(
                 ActivityManagerService.Lifecycle.class).getService();

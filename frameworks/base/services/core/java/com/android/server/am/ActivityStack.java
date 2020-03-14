@@ -937,7 +937,9 @@ class ActivityStack<T extends StackWindowController> extends ConfigurationContai
         Uri documentData = isDocument ? intent.getData() : null;
 
         if (DEBUG_TASKS) Slog.d(TAG_TASKS, "Looking for task of " + target + " in " + this);
-        for (int taskNdx = mTaskHistory.size() - 1; taskNdx >= 0; --taskNdx) {
+		// 1. 遍历 mTaskHistory 列表，列表的元素为 TaskRecord, 它用于存储没有被销毁的枝
+		for (int taskNdx = mTaskHistory.size() - 1; taskNdx >= 0; --taskNdx) {
+			// 2. 得到某一个栈的信息
             final TaskRecord task = mTaskHistory.get(taskNdx);
             if (task.voiceSession != null) {
                 // We never match voice sessions; those always run independently.
@@ -1000,6 +1002,8 @@ class ActivityStack<T extends StackWindowController> extends ConfigurationContai
                 result.r = r;
                 result.matchedByRootAffinity = false;
                 break;
+				// 3. 将栈的 rootAffinity （初始的 taskAffinity ）和目标 Activity 的 taskAffinity 做对比
+				// 如果相同，则将 FindTaskResult 的 matchedByRootAffinity 属性设置为 true ，说明找到了匹配的钱。
             } else if (!isDocument && !taskIsDocument
                     && result.r == null && task.rootAffinity != null) {
                 if (task.rootAffinity.equals(target.taskAffinity)) {
