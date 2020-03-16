@@ -190,6 +190,8 @@ public class Session extends IWindowSession.Stub
     public int addToDisplay(IWindow window, int seq, WindowManager.LayoutParams attrs,
             int viewVisibility, int displayId, Rect outContentInsets, Rect outStableInsets,
             Rect outOutsets, InputChannel outInputChannel) {
+            // 将自身也就是 Session 作为参数传了进去，
+            // 每个应用程序进程都会对应一个 Session, WMS 会用 ArrayList 来保存这些 Session 
         return mService.addWindow(this, window, seq, attrs, viewVisibility, displayId,
                 outContentInsets, outStableInsets, outOutsets, outInputChannel);
     }

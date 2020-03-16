@@ -764,6 +764,9 @@ public abstract class Window {
         mHardwareAccelerated = hardwareAccelerated
                 || SystemProperties.getBoolean(PROPERTY_HARDWARE_UI, false);
         if (wm == null) {
+			// 调用 Context 的 getSystemService方法，
+			// 并传入服务的名称 Context.WINDOW_SERVICE(值为 window)
+			// ContextImpl.getSystemService
             wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         }
         mWindowManager = ((WindowManagerImpl)wm).createLocalWindowManager(this);

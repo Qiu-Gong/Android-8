@@ -3472,10 +3472,13 @@ public class StatusBar extends SystemUI implements DemoMode,
     }
 
     private void addStatusBarWindow() {
+    	// 1. 用于构建 StatusBar 的视图
         makeStatusBarView();
         mStatusBarWindowManager = Dependency.get(StatusBarWindowManager.class);
         mRemoteInputController = new RemoteInputController(mHeadsUpManager);
-        mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
+		// 2. StatusBarWindowManager.add
+		// 将StatusBar的视图(StatusBarWindowView)和StatusBar的高度传进去，
+		mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
     }
 
     // called by makeStatusbar and also by PhoneStatusBarView

@@ -3713,6 +3713,7 @@ public final class ActivityThread {
         mSomeActivitiesChanged = true;
 
         // TODO Push resumeArgs into the activity for consideration
+		// 1. 调用 Activity 的 onResume 方法
         r = performResumeActivity(token, clearHide, reason);
 
         if (r != null) {
@@ -3742,6 +3743,7 @@ public final class ActivityThread {
                 r.window = r.activity.getWindow();
                 View decor = r.window.getDecorView();
                 decor.setVisibility(View.INVISIBLE);
+				// 2. 得到 ViewManager 类型的 wm 对象
                 ViewManager wm = a.getWindowManager();
                 WindowManager.LayoutParams l = r.window.getAttributes();
                 a.mDecor = decor;
@@ -3762,6 +3764,7 @@ public final class ActivityThread {
                 if (a.mVisibleFromClient) {
                     if (!a.mWindowAdded) {
                         a.mWindowAdded = true;
+						// 3. 调用了 ViewManager 的 addView 方法
                         wm.addView(decor, l);
                     } else {
                         // The activity will get a callback for this {@link LayoutParams} change

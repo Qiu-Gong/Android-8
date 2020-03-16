@@ -53,7 +53,8 @@ import java.util.List;
  * @hide
  */
 public final class WindowManagerImpl implements WindowManager {
-    private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
+	// 一个进程只有一个
+	private final WindowManagerGlobal mGlobal = WindowManagerGlobal.getInstance();
     private final Context mContext;
     private final Window mParentWindow;
 
@@ -69,7 +70,9 @@ public final class WindowManagerImpl implements WindowManager {
     }
 
     public WindowManagerImpl createLocalWindowManager(Window parentWindow) {
-        return new WindowManagerImpl(mContext, parentWindow);
+		// 创建 WindowManagerImpl 时将创建它的 Window 作为参数传了进来
+		// 这样 WindowManagerImpl 就持有了 Window 的引用
+		return new WindowManagerImpl(mContext, parentWindow);
     }
 
     public WindowManagerImpl createPresentationWindowManager(Context displayContext) {
@@ -89,12 +92,14 @@ public final class WindowManagerImpl implements WindowManager {
     @Override
     public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
         applyDefaultToken(params);
+		// 最后一个参数 mParentWindow 就是上面提到的 Window
         mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);
     }
 
     @Override
     public void updateViewLayout(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
         applyDefaultToken(params);
+		// WindowManagerGlobal.updateViewLayout
         mGlobal.updateViewLayout(view, params);
     }
 

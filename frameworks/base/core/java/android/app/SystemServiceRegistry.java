@@ -594,6 +594,7 @@ final class SystemServiceRegistry {
                 new CachedServiceFetcher<WindowManager>() {
             @Override
             public WindowManager createService(ContextImpl ctx) {
+            	// 1. 传入的 Context.WINDOW_SERVICE 对应的就是 WindowManagerImpI 实例
                 return new WindowManagerImpl(ctx);
             }});
 

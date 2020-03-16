@@ -117,7 +117,9 @@ public interface WindowManager extends ViewManager {
      *
      * @return The display that this window manager is managing.
      */
-    public Display getDefaultDisplay();
+    // 能够得知这个 WindowManager 实例将 Window 添加到哪个屏幕上了
+	// 得到 WindowManager 所管理的屏幕 （ Display ）
+	public Display getDefaultDisplay();
 
     /**
      * Special variation of {@link #removeView} that immediately invokes
@@ -127,6 +129,7 @@ public interface WindowManager extends ViewManager {
      *
      * @param view The view to be removed.
      */
+     // 在这个方法返回前要立即执行 View.onDetachedFromWindow()，来完成传入的View相关的销毁工作 
     public void removeViewImmediate(View view);
 
     /**
@@ -345,6 +348,8 @@ public interface WindowManager extends ViewManager {
         /**
          * Start of window types that represent normal application windows.
          */
+         // 
+         // 1. Type 表示应用程序窗口类型初始值
         public static final int FIRST_APPLICATION_WINDOW = 1;
 
         /**
@@ -353,6 +358,7 @@ public interface WindowManager extends ViewManager {
          * appear on top of it.
          * In multiuser systems shows only on the owning user's window.
          */
+         // 窗口的基础值，其他的窗口值要大于这个值
         public static final int TYPE_BASE_APPLICATION   = 1;
 
         /**
@@ -360,6 +366,7 @@ public interface WindowManager extends ViewManager {
          * an Activity token identifying who the window belongs to.
          * In multiuser systems shows only on the owning user's window.
          */
+         // 普通的应用程序窗口类型
         public static final int TYPE_APPLICATION        = 2;
 
         /**
@@ -369,6 +376,7 @@ public interface WindowManager extends ViewManager {
          * application can show its own windows.
          * In multiuser systems shows on all users' windows.
          */
+        // 应用程序启动窗口类型，用于系统在应用程序窗口启动前显示的窗口 
         public static final int TYPE_APPLICATION_STARTING = 3;
 
         /**
@@ -381,6 +389,7 @@ public interface WindowManager extends ViewManager {
         /**
          * End of types of application windows.
          */
+         // 2. Type 表示应用程序窗口类型结束值
         public static final int LAST_APPLICATION_WINDOW = 99;
 
         /**
@@ -389,6 +398,7 @@ public interface WindowManager extends ViewManager {
          * windows are kept next to their attached window in Z-order, and their
          * coordinate space is relative to their attached window.
          */
+        // 子窗口类型初始值
         public static final int FIRST_SUB_WINDOW = 1000;
 
         /**
@@ -436,12 +446,14 @@ public interface WindowManager extends ViewManager {
         /**
          * End of types of sub-windows.
          */
+        // 子窗口类型结束值
         public static final int LAST_SUB_WINDOW = 1999;
 
         /**
          * Start of system-specific window types.  These are not normally
          * created by applications.
          */
+        // 系统窗口类型初始值
         public static final int FIRST_SYSTEM_WINDOW     = 2000;
 
         /**
@@ -450,6 +462,7 @@ public interface WindowManager extends ViewManager {
          * windows are shifted down so they are below it.
          * In multiuser systems shows on all users' windows.
          */
+        // 系统状态栏窗口 
         public static final int TYPE_STATUS_BAR         = FIRST_SYSTEM_WINDOW;
 
         /**
@@ -457,6 +470,7 @@ public interface WindowManager extends ViewManager {
          * window; it is placed at the top of the screen.
          * In multiuser systems shows on all users' windows.
          */
+        // 搜索条窗口 
         public static final int TYPE_SEARCH_BAR         = FIRST_SYSTEM_WINDOW+1;
 
         /**
@@ -467,6 +481,7 @@ public interface WindowManager extends ViewManager {
          * In multiuser systems shows on all users' windows.
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
+        // 通话窗口
         @Deprecated
         public static final int TYPE_PHONE              = FIRST_SYSTEM_WINDOW+2;
 
@@ -476,6 +491,7 @@ public interface WindowManager extends ViewManager {
          * In multiuser systems shows only on the owning user's window.
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
+        // 系统 ALERT 窗口
         @Deprecated
         public static final int TYPE_SYSTEM_ALERT       = FIRST_SYSTEM_WINDOW+3;
 
@@ -484,6 +500,7 @@ public interface WindowManager extends ViewManager {
          * In multiuser systems shows on all users' windows.
          * @removed
          */
+        // 锁屏窗口
         public static final int TYPE_KEYGUARD           = FIRST_SYSTEM_WINDOW+4;
 
         /**
@@ -491,6 +508,7 @@ public interface WindowManager extends ViewManager {
          * In multiuser systems shows only on the owning user's window.
          * @deprecated for non-system apps. Use {@link #TYPE_APPLICATION_OVERLAY} instead.
          */
+        // TOAST 窗口
         @Deprecated
         public static final int TYPE_TOAST              = FIRST_SYSTEM_WINDOW+5;
 
@@ -737,6 +755,7 @@ public interface WindowManager extends ViewManager {
         /**
          * End of types of system windows.
          */
+        // 系统窗口类型结束值 
         public static final int LAST_SYSTEM_WINDOW      = 2999;
 
         /**
@@ -788,6 +807,7 @@ public interface WindowManager extends ViewManager {
          *  the lock screen to activate while the screen is on.
          *  This can be used independently, or in combination with
          *  {@link #FLAG_KEEP_SCREEN_ON} and/or {@link #FLAG_SHOW_WHEN_LOCKED} */
+        // 只要窗口可见，就允许在开启状态的屏幕上锁屏
         public static final int FLAG_ALLOW_LOCK_WHILE_SCREEN_ON     = 0x00000001;
 
         /** Window flag: everything behind this window will be dimmed.
@@ -812,9 +832,11 @@ public interface WindowManager extends ViewManager {
          * gets Z-ordered on top of the input method, so it can use the full
          * screen for its content and cover the input method if needed.  You
          * can use {@link #FLAG_ALT_FOCUSABLE_IM} to modify this behavior. */
+         // 窗口不能获得输入焦点，设置该标志的同时，FLAG_NOT_TOUCH_MODAL 也会被设置
         public static final int FLAG_NOT_FOCUSABLE      = 0x00000008;
 
         /** Window flag: this window can never receive touch events. */
+		// 窗口不接收任何触摸事件
         public static final int FLAG_NOT_TOUCHABLE      = 0x00000010;
 
         /** Window flag: even when this window is focusable (its
@@ -822,6 +844,7 @@ public interface WindowManager extends ViewManager {
          * outside of the window to be sent to the windows behind it.  Otherwise
          * it will consume all pointer events itself, regardless of whether they
          * are inside of the window. */
+         // 将该窗口区域外的触摸事件传递给其他的 Window，而自己只会处理窗口区域内的触摸事件
         public static final int FLAG_NOT_TOUCH_MODAL    = 0x00000020;
 
         /** Window flag: when set, if the device is asleep when the touch
@@ -836,6 +859,7 @@ public interface WindowManager extends ViewManager {
 
         /** Window flag: as long as this window is visible to the user, keep
          *  the device's screen turned on and bright. */
+         // 只要窗口可见，屏幕就会一直亮着
         public static final int FLAG_KEEP_SCREEN_ON     = 0x00000080;
 
         /** Window flag: place the window within the entire screen, ignoring
@@ -846,6 +870,7 @@ public interface WindowManager extends ViewManager {
         public static final int FLAG_LAYOUT_IN_SCREEN   = 0x00000100;
 
         /** Window flag: allow window to extend outside of the screen. */
+		// 允许窗口超过屏幕之外
         public static final int FLAG_LAYOUT_NO_LIMITS   = 0x00000200;
 
         /**
@@ -868,6 +893,7 @@ public interface WindowManager extends ViewManager {
          * {@link android.R.style#Theme_DeviceDefault_NoActionBar_Fullscreen}, and
          * {@link android.R.style#Theme_DeviceDefault_Light_NoActionBar_Fullscreen}.</p>
          */
+         // 隐藏所有的屏幕装饰窗口，比如在游戏、播放器 中的全屏显示
         public static final int FLAG_FULLSCREEN      = 0x00000400;
 
         /** Window flag: override {@link #FLAG_FULLSCREEN} and force the
@@ -901,6 +927,7 @@ public interface WindowManager extends ViewManager {
          * application will receive a CANCEL motion event to indicate this so applications
          * can handle this accordingly by taking no action on the event
          * until the finger is released. */
+         // 当用户的脸贴近屏幕时（ 比如打电话），不会去响应此事件
         public static final int FLAG_IGNORE_CHEEK_PRESSES    = 0x00008000;
 
         /** Window flag: a special option only for use in combination with
@@ -942,6 +969,7 @@ public interface WindowManager extends ViewManager {
          * non-secure keyguards.  This flag only applies to the top-most
          * full-screen window.
          */
+         // 窗口可以在锁屏的窗口之上显示
         public static final int FLAG_SHOW_WHEN_LOCKED = 0x00080000;
 
         /** Window flag: ask that the system wallpaper be shown behind
@@ -967,6 +995,7 @@ public interface WindowManager extends ViewManager {
          * visible, once the window has been shown then the system will
          * poke the power manager's user activity (as if the user had woken
          * up the device) to turn the screen on. */
+         // 窗口显示时将屏幕点亮
         public static final int FLAG_TURN_SCREEN_ON = 0x00200000;
 
         /** Window flag: when set the window will cause the keyguard to
@@ -1468,12 +1497,14 @@ public interface WindowManager extends ViewManager {
         /**
          * Visibility state for {@link #softInputMode}: no state has been specified.
          */
+         // 没有指定状态，系统会选择一个合适的状态或依赖于主题的设置
         public static final int SOFT_INPUT_STATE_UNSPECIFIED = 0;
 
         /**
          * Visibility state for {@link #softInputMode}: please don't change the state of
          * the soft input area.
          */
+         // 不会改变软键盘状态
         public static final int SOFT_INPUT_STATE_UNCHANGED = 1;
 
         /**
@@ -1481,12 +1512,14 @@ public interface WindowManager extends ViewManager {
          * area when normally appropriate (when the user is navigating
          * forward to your window).
          */
+         // 当用户进入该窗口时，软键盘默认隐藏
         public static final int SOFT_INPUT_STATE_HIDDEN = 2;
 
         /**
          * Visibility state for {@link #softInputMode}: please always hide any
          * soft input area when this window receives focus.
          */
+         // 当窗口获取焦点时，软键盘总是被隐藏
         public static final int SOFT_INPUT_STATE_ALWAYS_HIDDEN = 3;
 
         /**
@@ -1526,6 +1559,7 @@ public interface WindowManager extends ViewManager {
          * value for {@link #softInputMode} will be ignored; the window will
          * not resize, but will stay fullscreen.
          */
+         // 当软键盘弹出时，窗口会调整大小
         public static final int SOFT_INPUT_ADJUST_RESIZE = 0x10;
 
         /** Adjustment option for {@link #softInputMode}: set to have a window
@@ -1536,6 +1570,7 @@ public interface WindowManager extends ViewManager {
          * neither of these are set, then the system will try to pick one or
          * the other depending on the contents of the window.
          */
+         // 当软键盘弹出时，窗口不需要调整大小，要确保输入焦点是可见的
         public static final int SOFT_INPUT_ADJUST_PAN = 0x20;
 
         /** Adjustment option for {@link #softInputMode}: set to have a window

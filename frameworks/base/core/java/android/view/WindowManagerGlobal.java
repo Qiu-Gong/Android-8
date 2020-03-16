@@ -289,6 +289,8 @@ public final class WindowManagerGlobal {
 
         final WindowManager.LayoutParams wparams = (WindowManager.LayoutParams) params;
         if (parentWindow != null) {
+			// 1. 如果当前窗口要作为子窗口，就会根据父窗口对子窗口的
+			// WindowManager.LayoutParams 类型的 wparams 对象进行相应调整
             parentWindow.adjustLayoutParamsForSubWindow(wparams);
         } else {
             // If there's no parent, then hardware acceleration for this view is
@@ -342,17 +344,21 @@ public final class WindowManagerGlobal {
                     }
                 }
             }
-
+			// 2. 建了 ViewRootlmp 并赋值给 root
             root = new ViewRootImpl(view.getContext(), display);
 
             view.setLayoutParams(wparams);
 
+			// 3. 将添加的 View 保存到 View 列表中 
             mViews.add(view);
+			// 4. 将 root 存入到 ViewRootlmpl 列表中
             mRoots.add(root);
+			// 5. 将窗口的参数保存到布局参数列表中
             mParams.add(wparams);
 
             // do this last because it fires off messages to start doing things
             try {
+				// 6. 将窗口和窗口的参数通过 setView 方法设置到 ViewRootlmpl 中
                 root.setView(view, wparams, panelParentView);
             } catch (RuntimeException e) {
                 // BadTokenException or InvalidDisplayException, clean up.
@@ -373,14 +379,19 @@ public final class WindowManagerGlobal {
         }
 
         final WindowManager.LayoutParams wparams = (WindowManager.LayoutParams)params;
-
+		// 1. 将更新的参数设置到 View 中
         view.setLayoutParams(wparams);
 
         synchronized (mLock) {
+			// 2. 得到要更新的窗口在 View 列表中的索引
             int index = findViewLocked(view, true);
+			// 3. 在 ViewRootlmpl 列表中根据索引得到窗口的 ViewRootlmpl
             ViewRootImpl root = mRoots.get(index);
+			// 4. 更新布局参数列表
             mParams.remove(index);
+			// 5. 更新布局参数列表
             mParams.add(index, wparams);
+			// 6.
             root.setLayoutParams(wparams, false);
         }
     }

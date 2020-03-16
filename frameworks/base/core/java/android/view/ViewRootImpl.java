@@ -1355,7 +1355,9 @@ public final class ViewRootImpl implements ViewParent,
         if (!mTraversalScheduled) {
             mTraversalScheduled = true;
             mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
-            mChoreographer.postCallback(
+			// 1. 用于接收显示系统的 VSync 信号，在下一个帧渲染时控制执行一些操作。
+			// Choreographer 的 postCallback 方法用于发起添加回调，这个添加的回调将在下一帧被渲染时执行
+			mChoreographer.postCallback(
                     Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
             if (!mUnbufferedInputDispatch) {
                 scheduleConsumeBatchedInput();
@@ -1888,6 +1890,7 @@ public final class ViewRootImpl implements ViewParent,
                     }
                     mChoreographer.mFrameInfo.addFlags(FrameInfo.FLAG_WINDOW_LAYOUT_CHANGED);
                 }
+				// 1. 会调用 IWindowSession 的 relayout 方法来更新 Window 视图
                 relayoutResult = relayoutWindow(params, viewVisibility, insetsPending);
 
                 if (DEBUG_LAYOUT) Log.v(mTag, "relayout: frame=" + frame.toShortString()
@@ -2152,6 +2155,7 @@ public final class ViewRootImpl implements ViewParent,
                             + " coveredInsetsChanged=" + contentInsetsChanged);
 
                      // Ask host how big it wants to be
+                     // 2.
                     performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
 
                     // Implementation of weights from WindowManager.LayoutParams
@@ -2197,6 +2201,7 @@ public final class ViewRootImpl implements ViewParent,
         boolean triggerGlobalLayoutListener = didLayout
                 || mAttachInfo.mRecomputeGlobalAttributes;
         if (didLayout) {
+			// 3.
             performLayout(lp, mWidth, mHeight);
 
             // By this point all views have been sized and positioned
@@ -2343,7 +2348,7 @@ public final class ViewRootImpl implements ViewParent,
                 }
                 mPendingTransitions.clear();
             }
-
+			// 4.
             performDraw();
         } else {
             if (isViewVisible) {

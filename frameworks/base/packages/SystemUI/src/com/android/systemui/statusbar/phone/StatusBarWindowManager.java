@@ -88,9 +88,12 @@ public class StatusBarWindowManager implements RemoteInputController.Callback, D
         // Now that the status bar window encompasses the sliding panel and its
         // translucent backdrop, the entire thing is made TRANSLUCENT and is
         // hardware-accelerated.
+        // 1. 创建 LayoutParams 来配置 StatusBar 视图的属性
+        // 包括 Width、Height、Type、Flag、Gravity、SoftInputMode等
         mLp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 barHeight,
+                // 设置了TYPE_STATUS_BAR，表示 StatusBar 视图的窗口类型是状态栏
                 WindowManager.LayoutParams.TYPE_STATUS_BAR,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
@@ -106,6 +109,7 @@ public class StatusBarWindowManager implements RemoteInputController.Callback, D
         mLp.packageName = mContext.getPackageName();
         mStatusBarView = statusBarView;
         mBarHeight = barHeight;
+		// 2. 调用了 WindowManagerImpl 的 addView 方毯
         mWindowManager.addView(mStatusBarView, mLp);
         mLpChanged = new WindowManager.LayoutParams();
         mLpChanged.copyFrom(mLp);
