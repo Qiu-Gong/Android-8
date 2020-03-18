@@ -1713,14 +1713,14 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
     @Override
     void removeImmediately() {
         super.removeImmediately();
-
+		// 1. 正在执行删除 Window 操作
         if (mRemoved) {
             // Nothing to do.
             if (DEBUG_ADD_REMOVE) Slog.v(TAG_WM,
                     "WS.removeImmediately: " + this + " Already removed...");
             return;
         }
-
+		// 2. 于 1 形成 防止重复删除操作
         mRemoved = true;
 
         mWillReplaceWindow = false;
@@ -1737,12 +1737,18 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         if (WindowManagerService.excludeWindowTypeFromTapOutTask(type)) {
             dc.mTapExcludedWindows.remove(this);
         }
+		// 3. 当前要删除的 Window 是 StatusBar 或者 NavigationBar
+		// 就会将这个 Window 从对应的控制器中删除
         mPolicy.removeWindowLw(this);
 
         disposeInputChannel();
 
         mWinAnimator.destroyDeferredSurfaceLocked();
         mWinAnimator.destroySurfaceLocked();
+		// 4. 将 V 对应的 Session 从 WMS 的 ArraySet<Session> mSessions 
+		// 中删除并清除 Session 对应的 SurfaceSession 资源
+		// (SurfaceSession 是 SurfaceFlinger 的一个连接，通过这个连接可以创建 l 个或者多个 Surface
+		// 并渲染到屏幕上）
         mSession.windowRemovedLocked();
         try {
             mClient.asBinder().unlinkToDeath(mDeathRecipient, 0);
@@ -1750,7 +1756,8 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             // Ignore if it has already been removed (usually because
             // we are doing this as part of processing a death note.)
         }
-
+		// 5. WMS 的 postWindowRemoveCleanupLocked 方法用于
+		// 对 V 进行一些集中的清理工作
         mService.postWindowRemoveCleanupLocked(this);
     }
 
@@ -1886,7 +1893,13 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
             }
         }
 
-        removeImmediately();
+		// 条件判断过滤，满足其中一个条件就会 return，推迟删除操作
+
+		// 1. 并不是直接执行删除操作的，而是进行多个条
+		// 件判断过滤，满足其中一个条件就会 return，推迟删除操作
+
+		// 比如窗口删除正在运行－个动画，这时就得推迟删除操作，直到动画完成
+		removeImmediately();
         // Removing a visible window will effect the computed orientation
         // So just update orientation if needed.
         if (wasVisible && mService.updateOrientationFromAppTokensLocked(false, displayId)) {

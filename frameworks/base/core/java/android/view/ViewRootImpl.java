@@ -6288,7 +6288,16 @@ public final class ViewRootImpl implements ViewParent,
     boolean die(boolean immediate) {
         // Make sure we do execute immediately if we are in the middle of a traversal or the damage
         // done by dispatchDetachedFromWindow will cause havoc on return.
-        if (immediate && !mIsInTraversal) {
+		// die 方法需要立即执行并且此时 ViewRootimpl 不再执行 performTraversals 方法
+
+		// 1. immediate 为 true（需要立即执行）并且 mIsInTraversal 值为 false
+
+		// mIsInTraversal 在执行 ViewRootlmpl 的 performTraversals 方法时会被设置为 true，
+		// 在 performTraversals 方法执行完时被设置为 false 
+
+		// die 方法需要立即执行并且此时 ViewRootlmpl 不再执行 performTraversals 方法
+		if (immediate && !mIsInTraversal) {
+			// 2.
             doDie();
             return false;
         }
@@ -6304,17 +6313,23 @@ public final class ViewRootImpl implements ViewParent,
     }
 
     void doDie() {
+    	// 1. 检查执行 doDie 方法的线程的正确性
         checkThread();
         if (LOCAL_LOGV) Log.v(mTag, "DIE in " + this + " of " + mSurface);
         synchronized (this) {
+			// 2. 防止重复调用
             if (mRemoved) {
                 return;
             }
+			// 3. 防止重复调用
             mRemoved = true;
+			// 4.
             if (mAdded) {
+				// 5. 销毁 View
                 dispatchDetachedFromWindow();
             }
 
+			// 6.
             if (mAdded && !mFirst) {
                 destroyHardwareRenderer();
 
@@ -6340,6 +6355,7 @@ public final class ViewRootImpl implements ViewParent,
 
             mAdded = false;
         }
+		// 7.
         WindowManagerGlobal.getInstance().doRemoveView(this);
     }
 

@@ -813,11 +813,15 @@ public final class SystemServer {
             traceEnd();
 
             traceBeginAndSlog("InitWatchdog");
+			// 1. 得到 Watchdog 实例
+			//  Watchdog 用来监控系统的一些关键服务的运行状况 
             final Watchdog watchdog = Watchdog.getInstance();
+			// 2. 对它进行初始化，
             watchdog.init(context, mActivityManagerService);
             traceEnd();
 
             traceBeginAndSlog("StartInputManagerService");
+			// 3. 创建了 IMS，并赋值给 IMS 类型的 inputManager 对象 
             inputManager = new InputManagerService(context);
             traceEnd();
 
@@ -825,10 +829,14 @@ public final class SystemServer {
             // WMS needs sensor service ready
             ConcurrentUtils.waitForFutureNoInterrupt(mSensorServiceStart, START_SENSOR_SERVICE);
             mSensorServiceStart = null;
+			// 4. 执行了 WMS 的 main 方怯， 其内部会创建 WMS
+			// main 方法其中一个传入的参数就是在创建的 IMS
             wm = WindowManagerService.main(context, inputManager,
                     mFactoryTestMode != FactoryTest.FACTORY_TEST_LOW_LEVEL,
                     !mFirstBoot, mOnlyCore, new PhoneWindowManager());
+			// 5.  WMS 注册到 ServiceManager 中
             ServiceManager.addService(Context.WINDOW_SERVICE, wm);
+			// 6.  IMS 注册到 ServiceManager 中
             ServiceManager.addService(Context.INPUT_SERVICE, inputManager);
             traceEnd();
 
@@ -916,6 +924,7 @@ public final class SystemServer {
 
         traceBeginAndSlog("MakeDisplayReady");
         try {
+			// 7. 处用来初始化屏幕显示信息
             wm.displayReady();
         } catch (Throwable e) {
             reportWtf("making display ready", e);
@@ -1577,6 +1586,7 @@ public final class SystemServer {
 
         traceBeginAndSlog("MakeWindowManagerServiceReady");
         try {
+			// 8. 用来通知 WMS，系统的初始化工作已经完成
             wm.systemReady();
         } catch (Throwable e) {
             reportWtf("making Window Manager Service ready", e);

@@ -383,15 +383,15 @@ public final class WindowManagerGlobal {
         view.setLayoutParams(wparams);
 
         synchronized (mLock) {
-			// 2. 得到要更新的窗口在 View 列表中的索引
+			// 2. 得到要更新的窗口在 View 列表中的索引(mViews)
             int index = findViewLocked(view, true);
-			// 3. 在 ViewRootlmpl 列表中根据索引得到窗口的 ViewRootlmpl
+			// 3. 在 ViewRootlmpl 列表中根据索引得到窗口的 ViewRootlmpl(mRoots)
             ViewRootImpl root = mRoots.get(index);
-			// 4. 更新布局参数列表
+			// 4. 更新布局参数列表(mParams)
             mParams.remove(index);
 			// 5. 更新布局参数列表
             mParams.add(index, wparams);
-			// 6.
+			// 6. 调用 ViewRootlmpl 的 setLayoutParams 方法将更新的参数设置到 ViewRootlmpl 
             root.setLayoutParams(wparams, false);
         }
     }
@@ -402,8 +402,10 @@ public final class WindowManagerGlobal {
         }
 
         synchronized (mLock) {
+        	// 1. 找到要    移除的View 在 View 列表中的索引
             int index = findViewLocked(view, true);
             View curView = mRoots.get(index).getView();
+			// 2.
             removeViewLocked(index, immediate);
             if (curView == view) {
                 return;
@@ -457,15 +459,19 @@ public final class WindowManagerGlobal {
     }
 
     private void removeViewLocked(int index, boolean immediate) {
+    	// 1. 根据传入的索引在 ViewRootlmpl 列表中获得  删除窗口的 ViewRootlmpl
         ViewRootImpl root = mRoots.get(index);
         View view = root.getView();
 
         if (view != null) {
+			// 2. 得到 InputMethodManager 实例
             InputMethodManager imm = InputMethodManager.getInstance();
             if (imm != null) {
+				// 3. 结束 删除窗口 的输入法相关的逻辑
                 imm.windowDismissed(mViews.get(index).getWindowToken());
             }
         }
+		// 4.
         boolean deferred = root.die(immediate);
         if (view != null) {
             view.assignParent(null);
@@ -477,6 +483,7 @@ public final class WindowManagerGlobal {
 
     void doRemoveView(ViewRootImpl root) {
         synchronized (mLock) {
+			// 1. 删除 mRoots,mParams,mViews,mDyingViews
             final int index = mRoots.indexOf(root);
             if (index >= 0) {
                 mRoots.remove(index);

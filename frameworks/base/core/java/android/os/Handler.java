@@ -496,11 +496,16 @@ public class Handler {
             throw new IllegalArgumentException("timeout must be non-negative");
         }
 
+		// 1. 根据每个线程只有一个 Looper 的原理来判断当前的线程
+		// (system_server 线程) 是否是 Handler 所指向的线程(android.display 线程）
         if (Looper.myLooper() == mLooper) {
+			// 如果是则直接执行 Runnable 的 run 方法
             r.run();
             return true;
         }
 
+		// 如果不是则调用 BlockingRunnable 的 postAndWait 方法
+		// 并将当前线程的 Runnable 作为参数传进去
         BlockingRunnable br = new BlockingRunnable(r);
         return br.postAndWait(this, timeout);
     }
@@ -806,16 +811,21 @@ public class Handler {
         @Override
         public void run() {
             try {
+				// 1. 耗时方法
                 mTask.run();
             } finally {
                 synchronized (this) {
                     mDone = true;
+					// 
                     notifyAll();
                 }
             }
         }
 
+		// handler=android.display
         public boolean postAndWait(Handler handler, long timeout) {
+        	// 2. 开始执行耗时方法，在 android.display。
+        	// system_server wait 等待
             if (!handler.post(this)) {
                 return false;
             }
@@ -836,6 +846,7 @@ public class Handler {
                 } else {
                     while (!mDone) {
                         try {
+							// 3.
                             wait();
                         } catch (InterruptedException ex) {
                         }
