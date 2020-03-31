@@ -1,0 +1,186 @@
+卷 data 的文件夹 PATH 列表
+卷序列号为 0000009B 8C00:A7D0
+D:.
+│  list.bat
+│  文件树.txt
+│  
+├─frameworks
+│  ├─base
+│  │  ├─cmds
+│  │  │  └─app_process
+│  │  │          app_main.cpp
+│  │  │          
+│  │  ├─core
+│  │  │  ├─java
+│  │  │  │  ├─android
+│  │  │  │  │  ├─animation
+│  │  │  │  │  │      AnimationHandler.java
+│  │  │  │  │  │      
+│  │  │  │  │  ├─app
+│  │  │  │  │  │      Activity.java
+│  │  │  │  │  │      ActivityManager.java
+│  │  │  │  │  │      ActivityThread.java
+│  │  │  │  │  │      Application.java
+│  │  │  │  │  │      ContextImpl.java
+│  │  │  │  │  │      IActivityManager.aidl
+│  │  │  │  │  │      Instrumentation.java
+│  │  │  │  │  │      LoadedApk.java
+│  │  │  │  │  │      Service.java
+│  │  │  │  │  │      SystemServiceRegistry.java
+│  │  │  │  │  │      
+│  │  │  │  │  ├─content
+│  │  │  │  │  │      BroadcastReceiver.java
+│  │  │  │  │  │      ContentProvider.java
+│  │  │  │  │  │      ContentResolver.java
+│  │  │  │  │  │      Context.java
+│  │  │  │  │  │      ContextWrapper.java
+│  │  │  │  │  │      IContentProvider.java
+│  │  │  │  │  │      ServiceConnection.java
+│  │  │  │  │  │      
+│  │  │  │  │  ├─os
+│  │  │  │  │  │      Handler.java
+│  │  │  │  │  │      Process.java
+│  │  │  │  │  │      ServiceManager.java
+│  │  │  │  │  │      ZygoteProcess.java
+│  │  │  │  │  │      
+│  │  │  │  │  ├─util
+│  │  │  │  │  │      Singleton.java
+│  │  │  │  │  │      
+│  │  │  │  │  └─view
+│  │  │  │  │          ContextThemeWrapper.java
+│  │  │  │  │          Display.java
+│  │  │  │  │          ViewManager.java
+│  │  │  │  │          ViewRootImpl.java
+│  │  │  │  │          Window.java
+│  │  │  │  │          WindowManager.java
+│  │  │  │  │          WindowManagerGlobal.java
+│  │  │  │  │          WindowManagerImpl.java
+│  │  │  │  │          WindowManagerPolicy.java
+│  │  │  │  │          
+│  │  │  │  └─com
+│  │  │  │      └─android
+│  │  │  │          └─internal
+│  │  │  │              ├─os
+│  │  │  │              │      RuntimeInit.java
+│  │  │  │              │      Zygote.java
+│  │  │  │              │      ZygoteConnection.java
+│  │  │  │              │      ZygoteInit.java
+│  │  │  │              │      ZygoteServer.java
+│  │  │  │              │      
+│  │  │  │              └─policy
+│  │  │  │                      PhoneWindow.java
+│  │  │  │                      
+│  │  │  └─jni
+│  │  │          AndroidRuntime.cpp
+│  │  │          
+│  │  ├─packages
+│  │  │  └─SystemUI
+│  │  │      └─src
+│  │  │          └─com
+│  │  │              └─android
+│  │  │                  └─systemui
+│  │  │                      └─statusbar
+│  │  │                          └─phone
+│  │  │                                  StatusBar.java
+│  │  │                                  StatusBarWindowManager.java
+│  │  │                                  
+│  │  └─services
+│  │      ├─core
+│  │      │  └─java
+│  │      │      └─com
+│  │      │          └─android
+│  │      │              └─server
+│  │      │                  │  DisplayThread.java
+│  │      │                  │  ServiceThread.java
+│  │      │                  │  SystemServiceManager.java
+│  │      │                  │  Watchdog.java
+│  │      │                  │  
+│  │      │                  ├─am
+│  │      │                  │      ActiveServices.java
+│  │      │                  │      ActivityManagerService.java
+│  │      │                  │      ActivityRecord.java
+│  │      │                  │      ActivityStack.java
+│  │      │                  │      ActivityStackSupervisor.java
+│  │      │                  │      ActivityStarter.java
+│  │      │                  │      AppBindRecord.java
+│  │      │                  │      BroadcastFilter.java
+│  │      │                  │      BroadcastQueue.java
+│  │      │                  │      BroadcastRecord.java
+│  │      │                  │      ConnectionRecord.java
+│  │      │                  │      IntentBindRecord.java
+│  │      │                  │      ProcessRecord.java
+│  │      │                  │      ReceiverList.java
+│  │      │                  │      ServiceRecord.java
+│  │      │                  │      TaskRecord.java
+│  │      │                  │      
+│  │      │                  ├─input
+│  │      │                  │      InputManagerService.java
+│  │      │                  │      
+│  │      │                  ├─pm
+│  │      │                  │      PackageManagerService.java
+│  │      │                  │      
+│  │      │                  ├─policy
+│  │      │                  │      PhoneWindowManager.java
+│  │      │                  │      
+│  │      │                  └─wm
+│  │      │                          AppWindowToken.java
+│  │      │                          Session.java
+│  │      │                          WindowContainer.java
+│  │      │                          WindowHashMap.java
+│  │      │                          WindowManagerService.java
+│  │      │                          WindowState.java
+│  │      │                          WindowToken.java
+│  │      │                          
+│  │      └─java
+│  │          └─com
+│  │              └─android
+│  │                  └─server
+│  │                          SystemServer.java
+│  │                          
+│  └─native
+│      └─libs
+│          └─binder
+│              │  ProcessState.cpp
+│              │  
+│              └─include
+│                  └─binder
+│                          ProcessState.h
+│                          
+├─packages
+│  └─apps
+│      └─Launcher3
+│          │  AndroidManifest.xml
+│          │  
+│          └─src
+│              └─com
+│                  └─android
+│                      └─launcher3
+│                          │  Launcher.java
+│                          │  LauncherAppState.java
+│                          │  LauncherModel.java
+│                          │  
+│                          └─allapps
+│                                  AllAppsContainerView.java
+│                                  
+└─system
+    └─core
+        ├─init
+        │      builtins.cpp
+        │      builtins.h
+        │      init.cpp
+        │      init.h
+        │      init_parser.cpp
+        │      init_parser.h
+        │      property_service.cpp
+        │      property_service.h
+        │      service.cpp
+        │      service.h
+        │      signal_handler.cpp
+        │      signal_handler.h
+        │      
+        └─rootdir
+                init.rc
+                init.zygote32.rc
+                init.zygote32_64.rc
+                init.zygote64.rc
+                
